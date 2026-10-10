@@ -1,0 +1,18 @@
+# ============================================================================
+# MySQL Database Connection Configuration
+# ============================================================================
+db.url=jdbc:mysql://localhost:3306/finance_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
+db.username=root
+db.password=rootpassword
+db.driver=com.mysql.cj.jdbc.Driver
+
+# Connection Pool / Timing Settings
+db.maxPoolSize=10
+db.connectionTimeout=30000
+
+# ============================================================================
+# Security & Cryptography Configuration
+# ============================================================================
+# 32-character secret key for AES-256 encryption of sensitive expense notes
+# (Keep this key private outside public repositories)
+security.aes.key=MySuperSecretFinKey2026!Finance

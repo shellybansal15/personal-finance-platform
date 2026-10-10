@@ -1,0 +1,22 @@
+# Compiled class files
+target/
+*.class
+
+# Log files
+*.log
+
+# Sensitive environment configuration
+src/main/resources/db.properties
+*.properties.local
+
+# IDE configurations
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+# OS files
+.DS_Store
+Thumbs.db

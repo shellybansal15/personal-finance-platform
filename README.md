@@ -206,16 +206,3 @@ Both default test accounts are pre-seeded with active BCrypt hashed passwords:
 
 ---
 
-## 📸 UI Screenshots
-
-> *Placeholder for project screenshots to include in your final college submission report:*
-
-```
-[Screenshots Placeholder]
-1. Login & Registration Screen (Split Screen with Password Strength Meter)
-2. User Dashboard (4 Stat Cards, Chart.js Doughnut & Monthly Line Charts)
-3. Expenses Table (Search Filters, Pagination & CSV Export)
-4. Category Budgets (Trackable Amber & Red Progress Bars)
-5. Financial Goals (Target Progress & Fund Contribution Modal)
-6. Admin Command Center (User Management & Synchronized Security Logs)
-```

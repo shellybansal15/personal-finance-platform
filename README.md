@@ -14,7 +14,6 @@
 7. [How to Build & Run on Apache Tomcat 10.1](#how-to-build--run-on-apache-tomcat-101)
 8. [Default Login Credentials](#default-login-credentials)
 9. [Design System & Themes](#design-system--themes)
-10. [UI Screenshots](#ui-screenshots)
 
 ---
 

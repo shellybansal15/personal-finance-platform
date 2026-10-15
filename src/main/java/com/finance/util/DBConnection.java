@@ -46,8 +46,15 @@ public class DBConnection {
                 jdbcDriver = properties.getProperty("db.driver", "com.mysql.cj.jdbc.Driver");
             }
 
+            // Environment variables (used on Render) override the file values
+            if (System.getenv("DB_URL") != null) jdbcUrl = System.getenv("DB_URL");
+            if (System.getenv("DB_USER") != null) jdbcUser = System.getenv("DB_USER");
+            if (System.getenv("DB_PASSWORD") != null) jdbcPassword = System.getenv("DB_PASSWORD");
+
             // Register the MySQL JDBC Driver
             Class.forName(jdbcDriver);
+
+
         } catch (IOException e) {
             System.err.println("[DBConnection] ERROR: Failed to read db.properties: " + e.getMessage());
         } catch (ClassNotFoundException e) {

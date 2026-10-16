@@ -18,8 +18,11 @@
             <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
                 <div>
                     <h4 class="fw-bold mb-1">User Directory</h4>
-                    <p class="text-muted small mb-0">Manage platform accounts, enforce status access, and assign administrative roles.</p>
+                    <p class="text-muted small mb-0">View registered accounts, update roles (User/Admin), and delete or deactivate accounts.</p>
                 </div>
+                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                    <i class="bi bi-person-plus me-1"></i> Add User
+                </button>
             </div>
 
             <!-- Search & Filter Card -->
@@ -30,7 +33,7 @@
                             <label for="userSearch" class="form-label small fw-semibold">Search by Name or Email</label>
                             <div class="input-group input-group-sm">
                                 <span class="input-group-text"><i class="bi bi-search"></i></span>
-                                <input type="text" class="form-control" id="userSearch" name="search" 
+                                <input type="text" class="form-control" id="userSearch" name="search"
                                        placeholder="e.g. Alex Morgan or user@finance.com" value="${search}">
                             </div>
                         </div>
@@ -108,24 +111,27 @@
                                                 <td class="text-end pe-3">
                                                     <c:choose>
                                                         <c:when test="${isSelf}">
-                                                            <span class="text-muted small fst-italic" title="Admins cannot block or demote their own account">
+                                                            <span class="text-muted small fst-italic" title="Admins cannot block, demote, or delete their own account">
                                                                 <i class="bi bi-shield-lock"></i> Protected
                                                             </span>
                                                         </c:when>
                                                         <c:otherwise>
                                                             <div class="btn-group btn-group-sm">
-                                                                <!-- Status Toggle Button -->
-                                                                <button class="btn ${u.blocked ? 'btn-outline-success' : 'btn-outline-danger'}" 
-                                                                        title="${u.blocked ? 'Unblock Account' : 'Block Account'}"
+                                                                <button class="btn ${u.blocked ? 'btn-outline-success' : 'btn-outline-warning'}"
+                                                                        title="${u.blocked ? 'Reactivate Account' : 'Deactivate Account'}"
                                                                         onclick="openStatusModal(${u.id}, '${u.email}', '${u.status}')">
                                                                     <i class="bi ${u.blocked ? 'bi-check-circle' : 'bi-slash-circle'}"></i>
-                                                                    ${u.blocked ? 'Unblock' : 'Block'}
+                                                                    ${u.blocked ? 'Activate' : 'Deactivate'}
                                                                 </button>
-                                                                <!-- Role Change Button -->
-                                                                <button class="btn btn-outline-secondary" 
+                                                                <button class="btn btn-outline-secondary"
                                                                         title="Change Role"
                                                                         onclick="openRoleModal(${u.id}, '${u.email}', '${u.role}')">
                                                                     <i class="bi bi-arrow-repeat"></i> Role
+                                                                </button>
+                                                                <button class="btn btn-outline-danger"
+                                                                        title="Delete Account"
+                                                                        onclick="openDeleteModal(${u.id}, '${u.email}')">
+                                                                    <i class="bi bi-trash"></i>
                                                                 </button>
                                                             </div>
                                                         </c:otherwise>
@@ -175,6 +181,49 @@
     </main>
 </div>
 
+<!-- Add User Modal -->
+<div class="modal fade" id="addUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Create User Account</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="${pageContext.request.contextPath}/admin/users" method="POST">
+                <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
+                <input type="hidden" name="action" value="addUser">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="addName" class="form-label small fw-semibold">Full Name</label>
+                        <input type="text" class="form-control form-control-sm" id="addName" name="name" required maxlength="100">
+                    </div>
+                    <div class="mb-3">
+                        <label for="addEmail" class="form-label small fw-semibold">Email</label>
+                        <input type="email" class="form-control form-control-sm" id="addEmail" name="email" required maxlength="150">
+                    </div>
+                    <div class="mb-3">
+                        <label for="addRole" class="form-label small fw-semibold">Role</label>
+                        <select class="form-select form-select-sm" id="addRole" name="role">
+                            <option value="USER">USER</option>
+                            <option value="ADMIN">ADMIN</option>
+                        </select>
+                    </div>
+                    <div class="mb-0">
+                        <label for="addPassword" class="form-label small fw-semibold">Temporary Password</label>
+                        <input type="password" class="form-control form-control-sm" id="addPassword" name="password"
+                               placeholder="Leave blank for FinanceFlow@123" minlength="8">
+                        <div class="form-text">Strong password required if provided (8+ chars, mixed case, number, symbol).</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Account</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- Status Toggle Confirmation Modal -->
 <div class="modal fade" id="statusModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-sm">
@@ -189,8 +238,9 @@
                 <input type="hidden" id="statusUserId" name="userId">
 
                 <div class="modal-body">
-                    <p class="small mb-1">Are you sure you want to change account status for:</p>
+                    <p class="small mb-1">Change account status for:</p>
                     <p class="fw-bold mb-0 text-primary" id="statusUserEmail"></p>
+                    <p class="text-muted small mt-2 mb-0">Deactivating blocks login and ends any active sessions.</p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Cancel</button>
@@ -231,13 +281,40 @@
     </div>
 </div>
 
+<!-- Delete User Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold text-danger">Delete Account</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="${pageContext.request.contextPath}/admin/users" method="POST">
+                <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
+                <input type="hidden" name="action" value="deleteUser">
+                <input type="hidden" id="deleteUserId" name="userId">
+
+                <div class="modal-body">
+                    <p class="small mb-1">Permanently delete account for:</p>
+                    <p class="fw-bold mb-2 text-danger" id="deleteUserEmail"></p>
+                    <p class="text-muted small mb-0">This removes the user and related expenses, budgets, and goals. This cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <%@ include file="/WEB-INF/jsp/fragments/footer.jsp" %>
 
 <script>
     function openStatusModal(userId, email, currentStatus) {
         document.getElementById('statusUserId').value = userId;
         document.getElementById('statusUserEmail').textContent = email;
-        const newAction = currentStatus === 'ACTIVE' ? 'Block' : 'Unblock';
+        const newAction = currentStatus === 'ACTIVE' ? 'Deactivate' : 'Activate';
         document.getElementById('statusModalTitle').textContent = newAction + ' Account';
         document.getElementById('statusSubmitBtn').textContent = 'Yes, ' + newAction;
         new bootstrap.Modal(document.getElementById('statusModal')).show();
@@ -248,5 +325,11 @@
         document.getElementById('roleUserEmail').textContent = email;
         document.getElementById('roleSelect').value = currentRole;
         new bootstrap.Modal(document.getElementById('roleModal')).show();
+    }
+
+    function openDeleteModal(userId, email) {
+        document.getElementById('deleteUserId').value = userId;
+        document.getElementById('deleteUserEmail').textContent = email;
+        new bootstrap.Modal(document.getElementById('deleteModal')).show();
     }
 </script>

@@ -1,5 +1,8 @@
 package com.finance.util;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -117,5 +120,32 @@ public class LoginThrottler {
         AttemptRecord record = ATTEMPTS_MAP.get(key.trim().toLowerCase());
         if (record == null) return MAX_FAILED_ATTEMPTS;
         return Math.max(0, MAX_FAILED_ATTEMPTS - record.count);
+    }
+
+    /**
+     * Snapshot of in-memory failed-attempt counters for the admin Security panel.
+     * Keys are normalized emails/identifiers; values are AttemptRecord copies.
+     */
+    public static Map<String, AttemptRecord> getActiveAttemptSnapshot() {
+        if (ATTEMPTS_MAP.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        Map<String, AttemptRecord> snapshot = new LinkedHashMap<>();
+        long now = System.currentTimeMillis();
+        ATTEMPTS_MAP.forEach((key, record) -> {
+            if (record != null && (now - record.lastAttemptTime) <= LOCKOUT_DURATION_MS) {
+                snapshot.put(key, new AttemptRecord(record.count, record.lastAttemptTime));
+            }
+        });
+        return Collections.unmodifiableMap(snapshot);
+    }
+
+    public static boolean isLockedOutRecord(AttemptRecord record) {
+        if (record == null) return false;
+        long now = System.currentTimeMillis();
+        if (now - record.getLastAttemptTime() > LOCKOUT_DURATION_MS) {
+            return false;
+        }
+        return record.getCount() >= MAX_FAILED_ATTEMPTS;
     }
 }

@@ -27,14 +27,15 @@
                 </div>
             </div>
 
-            <!-- 3 Admin Stat Cards -->
+            <!-- Admin Stat Cards -->
             <div class="row g-3 mb-4">
-                <div class="col-12 col-md-4">
+                <div class="col-6 col-md-3">
                     <div class="card card-hover h-100">
                         <div class="card-body d-flex align-items-center justify-content-between">
                             <div>
                                 <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Total Users</span>
                                 <h3 class="fw-bold mb-0">${stats.totalUsers}</h3>
+                                <span class="text-muted" style="font-size:0.7rem;">${stats.activeUsers} active · ${stats.blockedUsers} blocked</span>
                             </div>
                             <div class="stat-card-icon stat-icon-blue">
                                 <i class="bi bi-people-fill"></i>
@@ -43,32 +44,74 @@
                     </div>
                 </div>
 
-                <div class="col-12 col-md-4">
+                <div class="col-6 col-md-3">
                     <div class="card card-hover h-100">
                         <div class="card-body d-flex align-items-center justify-content-between">
                             <div>
-                                <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Total Platform Expenses</span>
-                                <h3 class="fw-bold mb-0">${stats.totalExpensesCount}</h3>
+                                <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Active Sessions</span>
+                                <h3 class="fw-bold mb-0">${stats.activeSessions}</h3>
                             </div>
                             <div class="stat-card-icon stat-icon-green">
+                                <i class="bi bi-broadcast-pin"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-6 col-md-3">
+                    <div class="card card-hover h-100">
+                        <div class="card-body d-flex align-items-center justify-content-between">
+                            <div>
+                                <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Platform Expenses</span>
+                                <h3 class="fw-bold mb-0">${stats.totalExpensesCount}</h3>
+                            </div>
+                            <div class="stat-card-icon stat-icon-amber">
                                 <i class="bi bi-receipt"></i>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="col-12 col-md-4">
+                <div class="col-6 col-md-3">
                     <div class="card card-hover h-100">
                         <div class="card-body d-flex align-items-center justify-content-between">
                             <div>
-                                <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Audit Log Entries</span>
+                                <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Audit Entries</span>
                                 <h3 class="fw-bold mb-0">${stats.securityLogsCount}</h3>
                             </div>
-                            <div class="stat-card-icon stat-icon-amber">
+                            <div class="stat-card-icon stat-icon-blue">
                                 <i class="bi bi-shield-lock-fill"></i>
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Quick admin modules -->
+            <div class="row g-3 mb-4">
+                <div class="col-12 col-md-4">
+                    <a href="${pageContext.request.contextPath}/admin/users" class="card card-hover text-decoration-none h-100">
+                        <div class="card-body">
+                            <div class="fw-semibold text-dark"><i class="bi bi-people-fill text-primary me-2"></i>User Management</div>
+                            <p class="text-muted small mb-0 mt-1">View accounts, change roles, deactivate or delete users.</p>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-12 col-md-4">
+                    <a href="${pageContext.request.contextPath}/admin/security" class="card card-hover text-decoration-none h-100">
+                        <div class="card-body">
+                            <div class="fw-semibold text-dark"><i class="bi bi-shield-lock-fill text-danger me-2"></i>Security Center</div>
+                            <p class="text-muted small mb-0 mt-1">Audit logs, live sessions, and recent login attempts.</p>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-12 col-md-4">
+                    <a href="${pageContext.request.contextPath}/admin/settings" class="card card-hover text-decoration-none h-100">
+                        <div class="card-body">
+                            <div class="fw-semibold text-dark"><i class="bi bi-sliders text-success me-2"></i>System Settings</div>
+                            <p class="text-muted small mb-0 mt-1">Configure application-wide parameters and toggles.</p>
+                        </div>
+                    </a>
                 </div>
             </div>
 

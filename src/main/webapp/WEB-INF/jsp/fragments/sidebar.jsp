@@ -61,7 +61,7 @@
             <a href="${pageContext.request.contextPath}/admin/security" 
                class="sidebar-link ${activeMenu == 'admin-security' ? 'active' : ''}">
                 <i class="bi bi-shield-lock-fill"></i>
-                <span>Security Logs</span>
+                <span>Security Center</span>
             </a>
 
             <a href="${pageContext.request.contextPath}/admin/settings" 

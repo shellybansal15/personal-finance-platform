@@ -33,6 +33,8 @@ public class AdminSettingsServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
+        // Ensure application-wide defaults exist before rendering
+        adminService.ensureDefaultSettings(null);
         List<SystemSetting> settings = adminService.getSystemSettings();
         req.setAttribute("settings", settings);
 
@@ -45,13 +47,21 @@ public class AdminSettingsServlet extends HttpServlet {
 
         HttpSession session = req.getSession(false);
         int adminUserId = (Integer) session.getAttribute("userId");
-        String key = req.getParameter("settingKey");
-        String value = req.getParameter("settingValue");
+        String action = req.getParameter("action");
         String clientIp = getClientIp(req);
 
         try {
-            adminService.updateSystemSetting(key, value, adminUserId, clientIp);
-            session.setAttribute("flashSuccess", "Success: System parameter '" + key + "' updated to '" + value + "'!");
+            if ("addSetting".equalsIgnoreCase(action)) {
+                String key = req.getParameter("settingKey");
+                String value = req.getParameter("settingValue");
+                adminService.updateSystemSetting(key, value, adminUserId, clientIp);
+                session.setAttribute("flashSuccess", "Success: New system parameter '" + key + "' saved!");
+            } else {
+                String key = req.getParameter("settingKey");
+                String value = req.getParameter("settingValue");
+                adminService.updateSystemSetting(key, value, adminUserId, clientIp);
+                session.setAttribute("flashSuccess", "Success: System parameter '" + key + "' updated to '" + value + "'!");
+            }
         } catch (AppException e) {
             session.setAttribute("flashError", e.getMessage());
         } catch (Exception e) {

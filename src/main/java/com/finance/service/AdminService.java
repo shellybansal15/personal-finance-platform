@@ -6,11 +6,14 @@ import com.finance.dao.SystemSettingDAO;
 import com.finance.dao.UserDAO;
 import com.finance.exception.ResourceNotFoundException;
 import com.finance.exception.ValidationException;
+import com.finance.model.ActiveSession;
 import com.finance.model.SecurityLog;
 import com.finance.model.SystemSetting;
 import com.finance.model.User;
 import com.finance.util.AuditLogger;
+import com.finance.util.LoginThrottler;
 import com.finance.util.PasswordUtil;
+import com.finance.util.SessionTracker;
 import com.finance.util.ValidationUtil;
 
 import java.util.HashMap;
@@ -93,6 +96,7 @@ public class AdminService {
         }
 
         User user = userOpt.get();
+        SessionTracker.invalidateUserSessions(targetUserId, null);
         userDAO.delete(targetUserId);
         auditLogger.log(adminUserId, String.format("Admin deleted user '%s' (ID #%d)", user.getEmail(), targetUserId), ipAddress);
     }
@@ -113,6 +117,11 @@ public class AdminService {
         User user = userOpt.get();
         String newStatus = "ACTIVE".equalsIgnoreCase(user.getStatus()) ? "BLOCKED" : "ACTIVE";
         userDAO.updateStatus(targetUserId, newStatus);
+
+        // Deactivated accounts must not keep live sessions
+        if ("BLOCKED".equals(newStatus)) {
+            SessionTracker.invalidateUserSessions(targetUserId, null);
+        }
 
         auditLogger.log(adminUserId, String.format("Admin changed user '%s' (ID #%d) status to %s",
                 user.getEmail(), targetUserId, newStatus), ipAddress);
@@ -147,6 +156,18 @@ public class AdminService {
         return securityLogDAO.getRecentLogs(limit);
     }
 
+    public List<SecurityLog> getRecentLoginAttempts(int limit) {
+        return securityLogDAO.getLoginRelatedLogs(limit);
+    }
+
+    public List<ActiveSession> getActiveSessions() {
+        return SessionTracker.getActiveSessions();
+    }
+
+    public Map<String, LoginThrottler.AttemptRecord> getLiveFailedLoginAttempts() {
+        return LoginThrottler.getActiveAttemptSnapshot();
+    }
+
     public List<SecurityLog> getFilteredSecurityLogs(String userFilter, String actionFilter, int offset, int limit) {
         return securityLogDAO.getFilteredLogs(userFilter, actionFilter, offset, limit);
     }
@@ -156,7 +177,35 @@ public class AdminService {
     }
 
     public List<SystemSetting> getSystemSettings() {
-        return systemSettingDAO.findAll();
+        List<SystemSetting> settings = systemSettingDAO.findAll();
+        if (settings.isEmpty()) {
+            ensureDefaultSettings(null);
+            settings = systemSettingDAO.findAll();
+        }
+        return settings;
+    }
+
+    /**
+     * Seeds standard application-wide parameters when the settings table is empty.
+     */
+    public void ensureDefaultSettings(Integer adminUserId) {
+        String[][] defaults = {
+                {"allow_registration", "true"},
+                {"max_login_attempts", "5"},
+                {"session_timeout_minutes", "15"},
+                {"maintenance_mode", "false"},
+                {"platform_currency", "INR"},
+                {"app_name", "FinanceFlow"},
+                {"date_format", "dd-MM-yyyy"},
+                {"items_per_page", "10"},
+                {"lockout_duration_minutes", "15"},
+                {"require_strong_passwords", "true"}
+        };
+        for (String[] pair : defaults) {
+            if (systemSettingDAO.findByKey(pair[0]).isEmpty()) {
+                systemSettingDAO.setSettingValue(pair[0], pair[1], adminUserId);
+            }
+        }
     }
 
     public String getSetting(String key, String defaultValue) {
@@ -179,6 +228,7 @@ public class AdminService {
         stats.put("blockedUsers", userDAO.countUsersByStatus("BLOCKED"));
         stats.put("totalExpensesCount", expenseDAO.countAllExpenses());
         stats.put("securityLogsCount", securityLogDAO.countLogs());
+        stats.put("activeSessions", SessionTracker.countActiveSessions());
         return stats;
     }
 }

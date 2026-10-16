@@ -1,6 +1,11 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%
-    // If user is already logged in, redirect to user dashboard or admin dashboard
+    /*
+     * Welcome router:
+     * - Authenticated ADMIN  → /admin/dashboard
+     * - Authenticated USER   → /user/dashboard
+     * - Guest                → immersive scrollytelling landing page
+     */
     Object currentUser = session.getAttribute("currentUser");
     if (currentUser != null) {
         String role = (String) session.getAttribute("userRole");
@@ -10,7 +15,6 @@
             response.sendRedirect(request.getContextPath() + "/user/dashboard");
         }
     } else {
-        // Otherwise, send to login page
-        response.sendRedirect(request.getContextPath() + "/login");
+        request.getRequestDispatcher("/landing.jsp").forward(request, response);
     }
 %>

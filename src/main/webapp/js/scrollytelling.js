@@ -176,7 +176,29 @@
      * Initialization & Lifecycle Listeners
      */
     function init() {
-        if (!video) return;
+        // UI layers always run (reveal, INR counters, mobile nav) even if video is unavailable
+        initScrollReveal();
+        initInrCounters();
+        initMobileNav();
+        initLandingFlash();
+
+        if (hudRewindBtn) {
+            hudRewindBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        }
+
+        window.addEventListener('scroll', onScrollUpdate, { passive: true });
+        window.addEventListener('resize', onScrollUpdate, { passive: true });
+
+        if (!video) {
+            // Still update progress bar / HUD from scroll without video sync
+            targetProgress = calculateScrollProgress();
+            currentProgress = targetProgress;
+            requestAnimationFrame(renderEngineLoop);
+            return;
+        }
 
         // Force proper properties to prevent unwanted autoplay or audio conflicts
         video.autoplay = false;
@@ -218,30 +240,144 @@
             }
         });
 
-        // Window Scroll & Resize listeners with passive flag for 60fps scrolling
-        window.addEventListener('scroll', onScrollUpdate, { passive: true });
-        window.addEventListener('resize', onScrollUpdate, { passive: true });
-
         // User gestures to prime decoder
         ['click', 'touchstart', 'scroll', 'keydown'].forEach(evt => {
             window.addEventListener(evt, primeVideoEngine, { once: true, passive: true });
         });
 
-        // Rewind button in HUD
-        if (hudRewindBtn) {
-            hudRewindBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                window.scrollTo({
-                    top: 0,
-                    behavior: 'smooth'
-                });
-            });
-        }
-
         // Kick off the continuous RAF loop
         targetProgress = calculateScrollProgress();
         currentProgress = targetProgress;
         requestAnimationFrame(renderEngineLoop);
+    }
+
+    /**
+     * Fade-in sections as they enter the viewport (scrollytelling narrative pacing)
+     */
+    function initScrollReveal() {
+        const nodes = document.querySelectorAll('[data-reveal]');
+        if (!nodes.length || !('IntersectionObserver' in window)) {
+            nodes.forEach((el) => el.classList.add('is-visible'));
+            return;
+        }
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.18, rootMargin: '0px 0px -8% 0px' });
+
+        nodes.forEach((el) => observer.observe(el));
+    }
+
+    /**
+     * Format integer as Indian-grouped INR string (₹1,25,000)
+     */
+    function formatInr(amount) {
+        const n = Math.round(Math.abs(amount));
+        const str = String(n);
+        if (str.length <= 3) {
+            return '₹' + str;
+        }
+        const last3 = str.slice(-3);
+        let rest = str.slice(0, -3);
+        const parts = [];
+        while (rest.length > 2) {
+            parts.unshift(rest.slice(-2));
+            rest = rest.slice(0, -2);
+        }
+        if (rest.length) {
+            parts.unshift(rest);
+        }
+        return '₹' + parts.join(',') + ',' + last3;
+    }
+
+    /**
+     * Animate [data-inr-count] values when the INR section scrolls into view
+     */
+    function initInrCounters() {
+        const counters = document.querySelectorAll('[data-inr-count]');
+        if (!counters.length) return;
+
+        const animate = (el) => {
+            if (el.dataset.counted === '1') return;
+            el.dataset.counted = '1';
+            const target = parseInt(el.getAttribute('data-inr-count'), 10) || 0;
+            const duration = 1200;
+            const start = performance.now();
+
+            function frame(now) {
+                const t = Math.min(1, (now - start) / duration);
+                const eased = 1 - Math.pow(1 - t, 3);
+                el.textContent = formatInr(Math.round(target * eased));
+                if (t < 1) {
+                    requestAnimationFrame(frame);
+                } else {
+                    el.textContent = formatInr(target);
+                }
+            }
+            requestAnimationFrame(frame);
+        };
+
+        if (!('IntersectionObserver' in window)) {
+            counters.forEach(animate);
+            return;
+        }
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    animate(entry.target);
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.4 });
+
+        counters.forEach((el) => observer.observe(el));
+    }
+
+    /**
+     * Mobile hamburger drawer for section navigation
+     */
+    function initMobileNav() {
+        const toggle = document.getElementById('navMobileToggle');
+        const drawer = document.getElementById('mobileNavDrawer');
+        if (!toggle || !drawer) return;
+
+        function setOpen(open) {
+            drawer.classList.toggle('is-open', open);
+            drawer.setAttribute('aria-hidden', open ? 'false' : 'true');
+            toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+            toggle.querySelector('i').className = open ? 'bi bi-x-lg' : 'bi bi-list';
+        }
+
+        toggle.addEventListener('click', () => {
+            setOpen(!drawer.classList.contains('is-open'));
+        });
+
+        drawer.querySelectorAll('a').forEach((link) => {
+            link.addEventListener('click', () => setOpen(false));
+        });
+    }
+
+    function initLandingFlash() {
+        const flash = document.getElementById('landingFlash');
+        const closeBtn = document.getElementById('landingFlashClose');
+        if (!flash) return;
+
+        const dismiss = () => {
+            flash.style.opacity = '0';
+            flash.style.transform = 'translateX(-50%) translateY(-8px)';
+            setTimeout(() => flash.remove(), 280);
+        };
+
+        if (closeBtn) {
+            closeBtn.addEventListener('click', dismiss);
+        }
+        setTimeout(dismiss, 6000);
     }
 
     // Initialize when DOM content is ready

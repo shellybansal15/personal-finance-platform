@@ -18,8 +18,11 @@
             <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
                 <div>
                     <h4 class="fw-bold mb-1">System Preferences & Feature Toggles</h4>
-                    <p class="text-muted small mb-0">Configure operational parameters, security thresholds, and global application behavior.</p>
+                    <p class="text-muted small mb-0">Configure application-wide parameters, security thresholds, and global behavior.</p>
                 </div>
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addSettingModal">
+                    <i class="bi bi-plus-lg me-1"></i> Add Parameter
+                </button>
             </div>
 
             <!-- Settings Grid / Table -->
@@ -116,6 +119,7 @@
             </div>
             <form action="${pageContext.request.contextPath}/admin/settings" method="POST">
                 <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
+                <input type="hidden" name="action" value="updateSetting">
                 <input type="hidden" id="editSettingKey" name="settingKey">
 
                 <div class="modal-body">
@@ -126,6 +130,38 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">Save Value</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Setting Modal -->
+<div class="modal fade" id="addSettingModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Add System Parameter</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="${pageContext.request.contextPath}/admin/settings" method="POST">
+                <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
+                <input type="hidden" name="action" value="addSetting">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="newSettingKey" class="form-label small fw-semibold">Setting Key</label>
+                        <input type="text" class="form-control form-control-sm" id="newSettingKey" name="settingKey"
+                               pattern="[a-z0-9_]+" maxlength="100" required placeholder="e.g. feature_flag_x">
+                    </div>
+                    <div class="mb-0">
+                        <label for="newSettingValue" class="form-label small fw-semibold">Value</label>
+                        <input type="text" class="form-control form-control-sm" id="newSettingValue" name="settingValue"
+                               maxlength="255" required placeholder="e.g. true">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Parameter</button>
                 </div>
             </form>
         </div>

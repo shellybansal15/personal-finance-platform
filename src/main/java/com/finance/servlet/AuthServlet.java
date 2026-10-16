@@ -4,6 +4,7 @@ import com.finance.exception.AppException;
 import com.finance.model.User;
 import com.finance.service.UserService;
 import com.finance.util.CsrfUtil;
+import com.finance.util.SessionTracker;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -113,6 +114,7 @@ public class AuthServlet extends HttpServlet {
             newSession.setAttribute("userEmail", user.getEmail());
             newSession.setAttribute("userRole", user.getRole());
             CsrfUtil.getToken(newSession);
+            SessionTracker.register(newSession, user, clientIp);
 
             newSession.setAttribute("flashSuccess", "Welcome back, " + user.getName() + "! You have logged in successfully.");
 
@@ -174,7 +176,8 @@ public class AuthServlet extends HttpServlet {
         }
         HttpSession newSession = req.getSession(true);
         newSession.setAttribute("flashSuccess", "You have been logged out safely.");
-        resp.sendRedirect(req.getContextPath() + "/login");
+        // Return to landing; flash is shown on next login visit if they navigate there
+        resp.sendRedirect(req.getContextPath() + "/");
     }
 
     private String getClientIp(HttpServletRequest req) {

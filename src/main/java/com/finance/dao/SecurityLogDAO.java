@@ -101,6 +101,32 @@ public class SecurityLogDAO implements BaseDAO<SecurityLog> {
         return 0;
     }
 
+    /**
+     * Recent login-related audit events (successes, failures, lockouts, role mismatches).
+     */
+    public List<SecurityLog> getLoginRelatedLogs(int limit) throws DatabaseException {
+        String sql = "SELECT s.id, s.user_id, s.action, s.ip_address, s.created_at, u.email AS user_email " +
+                     "FROM security_logs s LEFT JOIN users u ON s.user_id = u.id " +
+                     "WHERE LOWER(s.action) LIKE '%login%' " +
+                     "   OR LOWER(s.action) LIKE '%lockout%' " +
+                     "   OR LOWER(s.action) LIKE '%logged in%' " +
+                     "ORDER BY s.id DESC LIMIT ?";
+        List<SecurityLog> list = new ArrayList<>();
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, Math.max(1, limit));
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapResultSetToSecurityLog(rs));
+                }
+            }
+        } catch (SQLException e) {
+            throw new DatabaseException("Failed to retrieve login-related security logs", e);
+        }
+        return list;
+    }
+
     @Override
     public boolean update(SecurityLog entity) throws DatabaseException {
         // Audit logs are strictly immutable and cannot be updated

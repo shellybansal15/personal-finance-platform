@@ -67,15 +67,14 @@ public class UserService {
     }
 
     /**
-     * Authenticates credentials without role check (existing behavior).
+     * Authenticates credentials without a role selector (existing callers).
      */
     public User login(String email, String password, String ipAddress) {
         return loginWithRole(email, password, null, ipAddress);
     }
 
     /**
-     * Authenticates credentials with role-based validation.
-     * If loginAsRole is provided (USER or ADMIN), the user's actual role must match.
+     * Authenticates credentials. When loginAsRole is USER or ADMIN, it must match the stored role.
      */
     public User loginWithRole(String email, String password, String loginAsRole, String ipAddress) {
         String cleanEmail = ValidationUtil.validateEmail(email);
@@ -115,16 +114,19 @@ public class UserService {
             throw new AuthenticationException("Your account has been suspended by an administrator. Please contact support.");
         }
 
-        // 5. [NEW] Role mismatch check
+        // 5. Role mismatch check when a "Login as" value is submitted
         if (loginAsRole != null && !loginAsRole.trim().isEmpty()) {
             String requestedRole = loginAsRole.trim().toUpperCase();
+            if (!"USER".equals(requestedRole) && !"ADMIN".equals(requestedRole)) {
+                throw new AuthenticationException("Please select whether you are logging in as User or Administrator.");
+            }
             if ("ADMIN".equals(requestedRole) && !user.isAdmin()) {
                 auditLogger.log(user.getId(), "Role mismatch: non-admin tried to login as ADMIN", ipAddress);
                 throw new AuthenticationException("This account is not an administrator. Please select 'User' and try again.");
             }
             if ("USER".equals(requestedRole) && user.isAdmin()) {
-                auditLogger.log(user.getId(), "Admin logged in as User role", ipAddress);
-                // Allow admins to login as User — no error, just route to admin dashboard
+                auditLogger.log(user.getId(), "Role mismatch: admin tried to login as USER", ipAddress);
+                throw new AuthenticationException("This account is an administrator. Please select 'Administrator' and try again.");
             }
         }
 

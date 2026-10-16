@@ -72,13 +72,25 @@
                     <% session.removeAttribute("loginEmail"); %>
                 </div>
 
-                <div class="mb-4">
+                <div class="mb-3">
                     <label for="password" class="form-label small fw-semibold">Password</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-key"></i></span>
                         <input type="password" class="form-control" id="password" name="password" 
                                placeholder="••••••••" required>
                     </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="loginAs" class="form-label small fw-semibold">Login as</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+                        <select class="form-select" id="loginAs" name="loginAs" required>
+                            <option value="USER" ${sessionScope.loginAs == 'ADMIN' ? '' : 'selected'}>User</option>
+                            <option value="ADMIN" ${sessionScope.loginAs == 'ADMIN' ? 'selected' : ''}>Administrator</option>
+                        </select>
+                    </div>
+                    <% session.removeAttribute("loginAs"); %>
                 </div>
 
                 <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold mb-3">
@@ -101,13 +113,13 @@
                 </div>
                 <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
                     <span><strong>Admin:</strong> admin@finance.com</span>
-                    <button class="btn btn-sm btn-outline-success py-0 px-2" style="font-size: 0.75rem;" 
-                            onclick="document.getElementById('email').value='admin@finance.com';document.getElementById('password').value='Admin@123';">Fill</button>
+                    <button class="btn btn-sm btn-outline-success py-0 px-2" style="font-size: 0.75rem;"
+                            onclick="document.getElementById('email').value='admin@finance.com';document.getElementById('password').value='Admin@123';document.getElementById('loginAs').value='ADMIN';">Fill</button>
                 </div>
                 <div class="d-flex justify-content-between align-items-center pt-1">
                     <span><strong>User:</strong> user@finance.com</span>
-                    <button class="btn btn-sm btn-outline-success py-0 px-2" style="font-size: 0.75rem;" 
-                            onclick="document.getElementById('email').value='user@finance.com';document.getElementById('password').value='User@123';">Fill</button>
+                    <button class="btn btn-sm btn-outline-success py-0 px-2" style="font-size: 0.75rem;"
+                            onclick="document.getElementById('email').value='user@finance.com';document.getElementById('password').value='User@123';document.getElementById('loginAs').value='USER';">Fill</button>
                 </div>
             </div>
         </div>

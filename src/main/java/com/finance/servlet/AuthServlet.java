@@ -95,7 +95,9 @@ public class AuthServlet extends HttpServlet {
         String loginAsRole = req.getParameter("loginAs");
 
         try {
-            // Use role-aware login method
+            if (loginAsRole == null || loginAsRole.trim().isEmpty()) {
+                throw new AppException("Please select whether you are logging in as User or Administrator.");
+            }
             User user = userService.loginWithRole(email, password, loginAsRole, clientIp);
 
             // Invalidate old session and generate new session ID (Session Fixation Prevention)
@@ -104,17 +106,16 @@ public class AuthServlet extends HttpServlet {
                 oldSession.invalidate();
             }
             HttpSession newSession = req.getSession(true);
+            newSession.setMaxInactiveInterval(15 * 60);
             newSession.setAttribute("currentUser", user);
             newSession.setAttribute("userId", user.getId());
             newSession.setAttribute("userName", user.getName());
             newSession.setAttribute("userEmail", user.getEmail());
             newSession.setAttribute("userRole", user.getRole());
-            CsrfUtil.getToken(newSession); // Prepare CSRF token
+            CsrfUtil.getToken(newSession);
 
-            // [Rubric: Every action shows confirmation message]
             newSession.setAttribute("flashSuccess", "Welcome back, " + user.getName() + "! You have logged in successfully.");
 
-            // Post-Redirect-Get routing: admin always goes to admin dashboard
             if (user.isAdmin()) {
                 resp.sendRedirect(req.getContextPath() + "/admin/dashboard");
             } else {
@@ -150,6 +151,7 @@ public class AuthServlet extends HttpServlet {
         }
 
         try {
+            // Public registration always creates USER; ignore any posted role parameter
             userService.register(name, email, password, occupation, clientIp);
 
             // [Rubric: Every action shows confirmation message]

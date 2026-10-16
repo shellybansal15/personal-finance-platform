@@ -4,6 +4,7 @@ import com.finance.exception.AppException;
 import com.finance.model.User;
 import com.finance.service.UserService;
 import com.finance.util.CsrfUtil;
+import com.finance.util.DatabaseSeeder;
 import com.finance.util.SessionTracker;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -98,6 +99,11 @@ public class AuthServlet extends HttpServlet {
         try {
             if (loginAsRole == null || loginAsRole.trim().isEmpty()) {
                 throw new AppException("Please select whether you are logging in as User or Administrator.");
+            }
+            // Safety net: if the DB was wiped or never seeded, recreate demo personas + MVP data
+            // before authentication so Fill → Sign In never hits "Failed to find user by email".
+            if (DatabaseSeeder.isDemoEmail(email)) {
+                DatabaseSeeder.ensureDemoWorkspace();
             }
             User user = userService.loginWithRole(email, password, loginAsRole, clientIp);
 

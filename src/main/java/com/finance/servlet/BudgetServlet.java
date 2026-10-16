@@ -5,6 +5,7 @@ import com.finance.model.Budget;
 import com.finance.model.Category;
 import com.finance.service.BudgetService;
 import com.finance.service.ExpenseService;
+import com.finance.util.CurrencyUtil;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -66,7 +67,7 @@ public class BudgetServlet extends HttpServlet {
                 String endDate = req.getParameter("endDate");
 
                 budgetService.createBudget(userId, categoryId, amount, startDate, endDate, clientIp);
-                session.setAttribute("flashSuccess", "Success: Budget limit of $" + amount + " set successfully!");
+                session.setAttribute("flashSuccess", "Success: Budget limit of " + CurrencyUtil.format(amount) + " set successfully!");
 
             } else if ("edit".equalsIgnoreCase(action)) {
                 int budgetId = Integer.parseInt(req.getParameter("budgetId"));

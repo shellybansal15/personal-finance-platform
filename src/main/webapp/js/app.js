@@ -3,6 +3,14 @@
  * Features: Dark Mode Toggle (localStorage), Mobile Sidebar Drawer, Auto-dismiss Alerts
  */
 
+function formatInr(value) {
+    const n = Number(value);
+    if (Number.isNaN(n)) {
+        return '₹0.00';
+    }
+    return '₹' + n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     // 1. Dark Mode / Light Mode Theme Engine
     const themeToggleBtn = document.getElementById('themeToggleBtn');

@@ -3,6 +3,7 @@ package com.finance.servlet;
 import com.finance.exception.AppException;
 import com.finance.model.Goal;
 import com.finance.service.GoalService;
+import com.finance.util.CurrencyUtil;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -70,7 +71,7 @@ public class GoalServlet extends HttpServlet {
                 String amount = req.getParameter("depositAmount");
 
                 goalService.addFunds(goalId, userId, amount, clientIp);
-                session.setAttribute("flashSuccess", "Success: Added $" + amount + " towards your goal!");
+                session.setAttribute("flashSuccess", "Success: Added " + CurrencyUtil.format(amount) + " towards your goal!");
 
             } else if ("edit".equalsIgnoreCase(action)) {
                 int goalId = Integer.parseInt(req.getParameter("goalId"));

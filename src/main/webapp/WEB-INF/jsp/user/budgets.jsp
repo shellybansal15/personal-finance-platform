@@ -1,6 +1,8 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page import="com.finance.util.CurrencyUtil" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<fmt:setLocale value="en_IN"/>
 <c:set var="pageTitle" value="Budgets" />
 <c:set var="pageHeader" value="Category Budgets" />
 <c:set var="activeMenu" value="budgets" />
@@ -68,13 +70,13 @@
                                             <div>
                                                 <span class="text-muted small d-block">Spent</span>
                                                 <h4 class="fw-bold mb-0 ${pct >= 100 ? 'text-danger' : (pct >= 80 ? 'text-warning' : 'text-primary')}">
-                                                    $<fmt:formatNumber value="${b.spentAmount}" minFractionDigits="2"/>
+                                                    <%= CurrencyUtil.format(((com.finance.model.Budget) pageContext.getAttribute("b")).getSpentAmount()) %>
                                                 </h4>
                                             </div>
                                             <div class="text-end">
                                                 <span class="text-muted small d-block">Target Limit</span>
                                                 <span class="fw-semibold text-secondary">
-                                                    $<fmt:formatNumber value="${b.amount}" minFractionDigits="2"/>
+                                                    <%= CurrencyUtil.format(((com.finance.model.Budget) pageContext.getAttribute("b")).getAmount()) %>
                                                 </span>
                                             </div>
                                         </div>
@@ -104,7 +106,7 @@
                                                 </c:when>
                                                 <c:otherwise>
                                                     <span class="badge bg-success-subtle text-success fw-semibold">
-                                                        <i class="bi bi-check-circle"></i> On Track ($<fmt:formatNumber value="${b.remainingAmount}" minFractionDigits="2"/> left)
+                                                        <i class="bi bi-check-circle"></i> On Track (<%= CurrencyUtil.format(((com.finance.model.Budget) pageContext.getAttribute("b")).getRemainingAmount()) %> left)
                                                     </span>
                                                 </c:otherwise>
                                             </c:choose>
@@ -160,9 +162,9 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="createAmount" class="form-label small fw-semibold">Monthly Limit Amount ($) *</label>
+                        <label for="createAmount" class="form-label small fw-semibold">Monthly Limit Amount (₹) *</label>
                         <div class="input-group">
-                            <span class="input-group-text">$</span>
+                            <span class="input-group-text">₹</span>
                             <input type="number" step="0.01" min="0.01" class="form-control" id="createAmount" name="amount" placeholder="500.00" required>
                         </div>
                     </div>
@@ -215,9 +217,9 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="editBudgetAmount" class="form-label small fw-semibold">Limit Amount ($) *</label>
+                        <label for="editBudgetAmount" class="form-label small fw-semibold">Limit Amount (₹) *</label>
                         <div class="input-group">
-                            <span class="input-group-text">$</span>
+                            <span class="input-group-text">₹</span>
                             <input type="number" step="0.01" min="0.01" class="form-control" id="editBudgetAmount" name="amount" required>
                         </div>
                     </div>

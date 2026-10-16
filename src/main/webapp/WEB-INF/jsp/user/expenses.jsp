@@ -1,6 +1,8 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page import="com.finance.util.CurrencyUtil" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<fmt:setLocale value="en_IN"/>
 <c:set var="pageTitle" value="Expenses" />
 <c:set var="pageHeader" value="Expense Tracking" />
 <c:set var="activeMenu" value="expenses" />
@@ -36,7 +38,7 @@
             <div class="card mb-4">
                 <div class="card-body py-3">
                     <form action="${pageContext.request.contextPath}/user/expenses" method="GET" class="row g-2 align-items-end">
-                        <div class="col-12 col-md-3">
+                        <div class="col-12 col-md-2">
                             <label for="filterCategory" class="form-label small fw-semibold">Category</label>
                             <select class="form-select form-select-sm" id="filterCategory" name="categoryId">
                                 <option value="ALL">All Categories</option>
@@ -45,15 +47,24 @@
                                 </c:forEach>
                             </select>
                         </div>
-                        <div class="col-6 col-md-3">
+                        <div class="col-12 col-md-2">
+                            <label for="filterPaymentMode" class="form-label small fw-semibold">Payment Mode</label>
+                            <select class="form-select form-select-sm" id="filterPaymentMode" name="paymentMode">
+                                <option value="ALL">All Modes</option>
+                                <c:forEach var="pm" items="${paymentModes}">
+                                    <option value="${pm.name()}" ${selectedPaymentMode == pm.name() ? 'selected' : ''}>${pm.displayName}</option>
+                                </c:forEach>
+                            </select>
+                        </div>
+                        <div class="col-6 col-md-2">
                             <label for="startDate" class="form-label small fw-semibold">Start Date</label>
                             <input type="date" class="form-control form-control-sm" id="startDate" name="startDate" value="${startDate}">
                         </div>
-                        <div class="col-6 col-md-3">
+                        <div class="col-6 col-md-2">
                             <label for="endDate" class="form-label small fw-semibold">End Date</label>
                             <input type="date" class="form-control form-control-sm" id="endDate" name="endDate" value="${endDate}">
                         </div>
-                        <div class="col-12 col-md-3 d-flex gap-2">
+                        <div class="col-12 col-md-4 d-flex gap-2">
                             <button type="submit" class="btn btn-sm btn-primary flex-grow-1">
                                 <i class="bi bi-funnel me-1"></i> Filter
                             </button>
@@ -76,6 +87,7 @@
                                         <tr>
                                             <th class="ps-3">Date</th>
                                             <th>Category</th>
+                                            <th>Payment Mode</th>
                                             <th>Note</th>
                                             <th>Amount</th>
                                             <th class="text-end pe-3">Actions</th>
@@ -88,6 +100,11 @@
                                                 <td>
                                                     <span class="badge bg-secondary-subtle text-secondary rounded-pill px-2 py-1">
                                                         ${exp.categoryName}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-primary-subtle text-primary rounded-pill px-2 py-1">
+                                                        <i class="bi ${exp.paymentMode.bootstrapIcon} me-1"></i>${exp.paymentMode.displayName}
                                                     </span>
                                                 </td>
                                                 <td class="small" style="max-width: 250px;">
@@ -103,12 +120,12 @@
                                                     </c:choose>
                                                 </td>
                                                 <td class="fw-bold text-danger">
-                                                    -$<fmt:formatNumber value="${exp.amount}" minFractionDigits="2" maxFractionDigits="2"/>
+                                                    -<%= CurrencyUtil.format(((com.finance.model.Expense) pageContext.getAttribute("exp")).getAmount()) %>
                                                 </td>
                                                 <td class="text-end pe-3">
                                                     <div class="btn-group btn-group-sm">
                                                         <button class="btn btn-outline-secondary" title="Edit Expense"
-                                                                onclick="openEditExpenseModal(${exp.id}, ${exp.categoryId}, '${exp.amount}', '${exp.date}', '${exp.note != null ? exp.note.replace('\'', '\\\'') : ''}')">
+                                                                onclick="openEditExpenseModal(${exp.id}, ${exp.categoryId}, '${exp.amount}', '${exp.date}', '${exp.note != null ? exp.note.replace('\'', '\\\'') : ''}', '${exp.paymentMode.name()}')">
                                                             <i class="bi bi-pencil"></i>
                                                         </button>
                                                         <button class="btn btn-outline-danger" title="Delete Expense"
@@ -132,15 +149,15 @@
                                     <nav aria-label="Page navigation">
                                         <ul class="pagination pagination-sm mb-0">
                                             <li class="page-item ${currentPage <= 1 ? 'disabled' : ''}">
-                                                <a class="page-link" href="${pageContext.request.contextPath}/user/expenses?page=${currentPage - 1}&categoryId=${selectedCategoryId}&startDate=${startDate}&endDate=${endDate}">Previous</a>
+                                                <a class="page-link" href="${pageContext.request.contextPath}/user/expenses?page=${currentPage - 1}&categoryId=${selectedCategoryId}&paymentMode=${selectedPaymentMode}&startDate=${startDate}&endDate=${endDate}">Previous</a>
                                             </li>
                                             <c:forEach var="i" begin="1" end="${totalPages}">
                                                 <li class="page-item ${currentPage == i ? 'active' : ''}">
-                                                    <a class="page-link" href="${pageContext.request.contextPath}/user/expenses?page=${i}&categoryId=${selectedCategoryId}&startDate=${startDate}&endDate=${endDate}">${i}</a>
+                                                    <a class="page-link" href="${pageContext.request.contextPath}/user/expenses?page=${i}&categoryId=${selectedCategoryId}&paymentMode=${selectedPaymentMode}&startDate=${startDate}&endDate=${endDate}">${i}</a>
                                                 </li>
                                             </c:forEach>
                                             <li class="page-item ${currentPage >= totalPages ? 'disabled' : ''}">
-                                                <a class="page-link" href="${pageContext.request.contextPath}/user/expenses?page=${currentPage + 1}&categoryId=${selectedCategoryId}&startDate=${startDate}&endDate=${endDate}">Next</a>
+                                                <a class="page-link" href="${pageContext.request.contextPath}/user/expenses?page=${currentPage + 1}&categoryId=${selectedCategoryId}&paymentMode=${selectedPaymentMode}&startDate=${startDate}&endDate=${endDate}">Next</a>
                                             </li>
                                         </ul>
                                     </nav>
@@ -180,9 +197,9 @@
 
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="addModalAmount" class="form-label small fw-semibold">Amount ($) *</label>
+                        <label for="addModalAmount" class="form-label small fw-semibold">Amount (₹) *</label>
                         <div class="input-group">
-                            <span class="input-group-text">$</span>
+                            <span class="input-group-text">₹</span>
                             <input type="number" step="0.01" min="0.01" class="form-control" id="addModalAmount" name="amount" placeholder="0.00" required>
                         </div>
                     </div>
@@ -195,6 +212,15 @@
                                 <c:if test="${c.type == 'EXPENSE'}">
                                     <option value="${c.id}">${c.name}</option>
                                 </c:if>
+                            </c:forEach>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="addModalPaymentMode" class="form-label small fw-semibold">Payment Mode *</label>
+                        <select class="form-select" id="addModalPaymentMode" name="paymentMode" required>
+                            <c:forEach var="pm" items="${paymentModes}">
+                                <option value="${pm.name()}" ${pm.name() == 'UPI' ? 'selected' : ''}>${pm.displayName}</option>
                             </c:forEach>
                         </select>
                     </div>
@@ -233,9 +259,9 @@
 
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="editAmount" class="form-label small fw-semibold">Amount ($) *</label>
+                        <label for="editAmount" class="form-label small fw-semibold">Amount (₹) *</label>
                         <div class="input-group">
-                            <span class="input-group-text">$</span>
+                            <span class="input-group-text">₹</span>
                             <input type="number" step="0.01" min="0.01" class="form-control" id="editAmount" name="amount" required>
                         </div>
                     </div>
@@ -247,6 +273,15 @@
                                 <c:if test="${c.type == 'EXPENSE'}">
                                     <option value="${c.id}">${c.name}</option>
                                 </c:if>
+                            </c:forEach>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="editPaymentMode" class="form-label small fw-semibold">Payment Mode *</label>
+                        <select class="form-select" id="editPaymentMode" name="paymentMode" required>
+                            <c:forEach var="pm" items="${paymentModes}">
+                                <option value="${pm.name()}">${pm.displayName}</option>
                             </c:forEach>
                         </select>
                     </div>
@@ -299,18 +334,19 @@
 <%@ include file="/WEB-INF/jsp/fragments/footer.jsp" %>
 
 <script>
-    function openEditExpenseModal(id, categoryId, amount, date, note) {
+    function openEditExpenseModal(id, categoryId, amount, date, note, paymentMode) {
         document.getElementById('editExpenseId').value = id;
         document.getElementById('editCategoryId').value = categoryId;
         document.getElementById('editAmount').value = amount;
         document.getElementById('editDate').value = date;
         document.getElementById('editNote').value = note || '';
+        document.getElementById('editPaymentMode').value = paymentMode || 'UPI';
         new bootstrap.Modal(document.getElementById('editExpenseModal')).show();
     }
 
     function openDeleteExpenseModal(id, amount, categoryName) {
         document.getElementById('deleteExpenseId').value = id;
-        document.getElementById('deleteExpenseDetails').textContent = '$' + amount + ' (' + categoryName + ')';
+        document.getElementById('deleteExpenseDetails').textContent = formatInr(amount) + ' (' + categoryName + ')';
         new bootstrap.Modal(document.getElementById('deleteExpenseModal')).show();
     }
 </script>

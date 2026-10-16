@@ -7,6 +7,7 @@ import com.finance.exception.UnauthorizedException;
 import com.finance.exception.ValidationException;
 import com.finance.model.Budget;
 import com.finance.util.AuditLogger;
+import com.finance.util.CurrencyUtil;
 import com.finance.util.ValidationUtil;
 
 import java.time.LocalDate;
@@ -51,7 +52,7 @@ public class BudgetService {
         budget.setEndDate(endDate);
 
         budgetDAO.save(budget);
-        auditLogger.log(userId, String.format("Created budget of $%.2f for Category ID #%d", amount, categoryId), ipAddress);
+        auditLogger.log(userId, String.format("Created budget of %s for Category ID #%d", CurrencyUtil.format(amount), categoryId), ipAddress);
 
         return budget;
     }
@@ -83,7 +84,7 @@ public class BudgetService {
         b.setEndDate(endDate);
 
         budgetDAO.update(b);
-        auditLogger.log(userId, String.format("Updated budget ID #%d to $%.2f", budgetId, amount), ipAddress);
+        auditLogger.log(userId, String.format("Updated budget ID #%d to %s", budgetId, CurrencyUtil.format(amount)), ipAddress);
     }
 
     public void deleteBudget(int budgetId, int userId, String ipAddress) {

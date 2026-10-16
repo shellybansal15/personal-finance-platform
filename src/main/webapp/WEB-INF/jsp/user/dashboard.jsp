@@ -1,6 +1,8 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page import="com.finance.util.CurrencyUtil" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<fmt:setLocale value="en_IN"/>
 <c:set var="pageTitle" value="Dashboard" />
 <c:set var="pageHeader" value="Financial Overview" />
 <c:set var="activeMenu" value="dashboard" />
@@ -44,7 +46,7 @@
                         <div class="card-body d-flex align-items-center justify-content-between">
                             <div>
                                 <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Spent This Month</span>
-                                <h3 class="fw-bold mb-0 text-danger">$<fmt:formatNumber value="${monthSpent}" minFractionDigits="2" maxFractionDigits="2"/></h3>
+                                <h3 class="fw-bold mb-0 text-danger"><%= CurrencyUtil.format((Double) request.getAttribute("monthSpent")) %></h3>
                             </div>
                             <div class="stat-card-icon stat-icon-red">
                                 <i class="bi bi-arrow-up-right"></i>
@@ -58,7 +60,7 @@
                         <div class="card-body d-flex align-items-center justify-content-between">
                             <div>
                                 <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Active Budgets</span>
-                                <h3 class="fw-bold mb-0">$<fmt:formatNumber value="${activeBudgetTotal}" minFractionDigits="2" maxFractionDigits="2"/></h3>
+                                <h3 class="fw-bold mb-0"><%= CurrencyUtil.format((Double) request.getAttribute("activeBudgetTotal")) %></h3>
                             </div>
                             <div class="stat-card-icon stat-icon-blue">
                                 <i class="bi bi-pie-chart-fill"></i>
@@ -72,7 +74,7 @@
                         <div class="card-body d-flex align-items-center justify-content-between">
                             <div>
                                 <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Goals Saved</span>
-                                <h3 class="fw-bold mb-0 text-success">$<fmt:formatNumber value="${totalSaved}" minFractionDigits="2" maxFractionDigits="2"/></h3>
+                                <h3 class="fw-bold mb-0 text-success"><%= CurrencyUtil.format((Double) request.getAttribute("totalSaved")) %></h3>
                             </div>
                             <div class="stat-card-icon stat-icon-green">
                                 <i class="bi bi-bullseye"></i>
@@ -86,7 +88,7 @@
                         <div class="card-body d-flex align-items-center justify-content-between">
                             <div>
                                 <span class="text-muted small fw-semibold text-uppercase d-block mb-1">All-Time Expenses</span>
-                                <h3 class="fw-bold mb-0">$<fmt:formatNumber value="${allTimeSpent}" minFractionDigits="2" maxFractionDigits="2"/></h3>
+                                <h3 class="fw-bold mb-0"><%= CurrencyUtil.format((Double) request.getAttribute("allTimeSpent")) %></h3>
                             </div>
                             <div class="stat-card-icon stat-icon-amber">
                                 <i class="bi bi-cash-stack"></i>
@@ -99,7 +101,7 @@
             <!-- 2. Visual Charts Row (Chart.js) -->
             <div class="row g-3 mb-4">
                 <!-- Doughnut Chart: Spending By Category -->
-                <div class="col-12 col-lg-5">
+                <div class="col-12 col-lg-4">
                     <div class="card h-100">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <span class="fw-semibold">Spending by Category</span>
@@ -123,11 +125,36 @@
                     </div>
                 </div>
 
-                <!-- Line Chart: 6-Month Expenditure Trend -->
-                <div class="col-12 col-lg-7">
+                <!-- Doughnut Chart: Spending By Payment Mode -->
+                <div class="col-12 col-lg-4">
                     <div class="card h-100">
                         <div class="card-header d-flex justify-content-between align-items-center">
-                            <span class="fw-semibold">Monthly Spending Trend (Last 6 Months)</span>
+                            <span class="fw-semibold">Spending by Payment Mode</span>
+                            <i class="bi bi-credit-card text-muted"></i>
+                        </div>
+                        <div class="card-body position-relative" style="min-height: 280px;">
+                            <c:choose>
+                                <c:when test="${not empty paymentModeSpending}">
+                                    <div style="height: 250px;">
+                                        <canvas id="paymentModeDoughnutChart"></canvas>
+                                    </div>
+                                </c:when>
+                                <c:otherwise>
+                                    <div class="empty-state">
+                                        <i class="bi bi-credit-card empty-state-icon"></i>
+                                        <p class="text-muted small mb-0">No payment mode data recorded yet.</p>
+                                    </div>
+                                </c:otherwise>
+                            </c:choose>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Line Chart: 6-Month Expenditure Trend -->
+                <div class="col-12 col-lg-4">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span class="fw-semibold">Monthly Trend (6 Mo)</span>
                             <i class="bi bi-graph-up text-muted"></i>
                         </div>
                         <div class="card-body position-relative" style="min-height: 280px;">
@@ -169,6 +196,7 @@
                                                 <tr>
                                                     <th class="ps-3">Date</th>
                                                     <th>Category</th>
+                                                    <th>Payment Mode</th>
                                                     <th>Note</th>
                                                     <th class="text-end pe-3">Amount</th>
                                                 </tr>
@@ -182,11 +210,16 @@
                                                                 ${exp.categoryName}
                                                             </span>
                                                         </td>
-                                                        <td class="small text-truncate" style="max-width: 220px;" title="${exp.note}">
+                                                        <td>
+                                                            <span class="badge bg-primary-subtle text-primary rounded-pill px-2 py-1">
+                                                                <i class="bi ${exp.paymentMode.bootstrapIcon} me-1"></i>${exp.paymentMode.displayName}
+                                                            </span>
+                                                        </td>
+                                                        <td class="small text-truncate" style="max-width: 180px;" title="${exp.note}">
                                                             ${not empty exp.note ? exp.note : '<em class="text-muted">No note</em>'}
                                                         </td>
                                                         <td class="text-end pe-3 fw-bold text-danger">
-                                                            -$<fmt:formatNumber value="${exp.amount}" minFractionDigits="2" maxFractionDigits="2"/>
+                                                            -<%= CurrencyUtil.format(((com.finance.model.Expense) pageContext.getAttribute("exp")).getAmount()) %>
                                                         </td>
                                                     </tr>
                                                 </c:forEach>
@@ -225,7 +258,9 @@
                                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                                     <span class="fw-semibold small">${b.categoryName}</span>
                                                     <span class="small ${pct >= 100 ? 'text-danger fw-bold' : (pct >= 80 ? 'text-warning fw-bold' : 'text-muted')}">
-                                                        $<fmt:formatNumber value="${b.spentAmount}" minFractionDigits="2"/> / $<fmt:formatNumber value="${b.amount}" minFractionDigits="2"/>
+                                                        <%= CurrencyUtil.format(((com.finance.model.Budget) pageContext.getAttribute("b")).getSpentAmount()) %>
+                                                        /
+                                                        <%= CurrencyUtil.format(((com.finance.model.Budget) pageContext.getAttribute("b")).getAmount()) %>
                                                         (<fmt:formatNumber value="${pct}" maxFractionDigits="0"/>%)
                                                     </span>
                                                 </div>
@@ -285,9 +320,9 @@
 
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="modalAmount" class="form-label small fw-semibold">Amount ($) *</label>
+                        <label for="modalAmount" class="form-label small fw-semibold">Amount (₹) *</label>
                         <div class="input-group">
-                            <span class="input-group-text">$</span>
+                            <span class="input-group-text">₹</span>
                             <input type="number" step="0.01" min="0.01" class="form-control" id="modalAmount" 
                                    name="amount" placeholder="0.00" required autofocus>
                         </div>
@@ -301,6 +336,15 @@
                                 <c:if test="${c.type == 'EXPENSE'}">
                                     <option value="${c.id}">${c.name}</option>
                                 </c:if>
+                            </c:forEach>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="modalPaymentMode" class="form-label small fw-semibold">Payment Mode *</label>
+                        <select class="form-select" id="modalPaymentMode" name="paymentMode" required>
+                            <c:forEach var="pm" items="${paymentModes}">
+                                <option value="${pm.name()}" ${pm.name() == 'UPI' ? 'selected' : ''}>${pm.displayName}</option>
                             </c:forEach>
                         </select>
                     </div>
@@ -334,7 +378,7 @@
 <!-- Chart.js Data Injection -->
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        // Doughnut Data
+        // Doughnut Data — Category
         const catLabels = [];
         const catValues = [];
         <c:forEach var="entry" items="${categorySpending}">
@@ -344,6 +388,18 @@
 
         if (catLabels.length > 0) {
             renderCategoryChart(catLabels, catValues);
+        }
+
+        // Doughnut Data — Payment Mode
+        const pmLabels = [];
+        const pmValues = [];
+        <c:forEach var="entry" items="${paymentModeSpending}">
+            pmLabels.push("${entry.key}");
+            pmValues.push(${entry.value});
+        </c:forEach>
+
+        if (pmLabels.length > 0) {
+            renderPaymentModeChart(pmLabels, pmValues);
         }
 
         // Line Trend Data
@@ -360,6 +416,7 @@
 
         window.renderAllCharts = function() {
             if (catLabels.length > 0) renderCategoryChart(catLabels, catValues);
+            if (pmLabels.length > 0) renderPaymentModeChart(pmLabels, pmValues);
             if (trendLabels.length > 0) renderTrendChart(trendLabels, trendValues);
         };
     });

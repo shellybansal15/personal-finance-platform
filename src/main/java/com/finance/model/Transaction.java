@@ -1,5 +1,7 @@
 package com.finance.model;
 
+import com.finance.util.CurrencyUtil;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -38,7 +40,7 @@ public abstract class Transaction {
 
     // Common descriptive method demonstrating code reuse in inheritance
     public String describe() {
-        return String.format("[%s] Amount: $%.2f on %s", getType(), amount, date);
+        return String.format("[%s] Amount: %s on %s", getType(), CurrencyUtil.format(amount), date);
     }
 
     // Getters and Setters

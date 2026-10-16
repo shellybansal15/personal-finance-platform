@@ -1,6 +1,8 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page import="com.finance.util.CurrencyUtil" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<fmt:setLocale value="en_IN"/>
 <c:set var="pageTitle" value="Financial Goals" />
 <c:set var="pageHeader" value="Financial Goals [Trackable]" />
 <c:set var="activeMenu" value="goals" />
@@ -35,7 +37,7 @@
                         </div>
                         <div>
                             <span class="small text-muted fw-semibold">Total Accumulated Savings</span>
-                            <h4 class="fw-bold text-success mb-0">$<fmt:formatNumber value="${totalSaved}" minFractionDigits="2"/></h4>
+                            <h4 class="fw-bold text-success mb-0"><%= CurrencyUtil.format((Double) request.getAttribute("totalSaved")) %></h4>
                         </div>
                     </div>
                     <div class="text-muted small">
@@ -108,13 +110,13 @@
                                             <div>
                                                 <span class="text-muted small d-block">Saved</span>
                                                 <h4 class="fw-bold mb-0 text-success">
-                                                    $<fmt:formatNumber value="${g.savedAmount}" minFractionDigits="2"/>
+                                                    <%= CurrencyUtil.format(((com.finance.model.Goal) pageContext.getAttribute("g")).getSavedAmount()) %>
                                                 </h4>
                                             </div>
                                             <div class="text-end">
                                                 <span class="text-muted small d-block">Target</span>
                                                 <span class="fw-semibold text-secondary">
-                                                    $<fmt:formatNumber value="${g.targetAmount}" minFractionDigits="2"/>
+                                                    <%= CurrencyUtil.format(((com.finance.model.Goal) pageContext.getAttribute("g")).getTargetAmount()) %>
                                                 </span>
                                             </div>
                                         </div>
@@ -129,7 +131,7 @@
 
                                         <div class="d-flex justify-content-between align-items-center mb-3 small">
                                             <span class="text-muted"><fmt:formatNumber value="${pct}" maxFractionDigits="1"/>% Achieved</span>
-                                            <span class="text-muted">Remaining: $<fmt:formatNumber value="${g.remainingAmount}" minFractionDigits="2"/></span>
+                                            <span class="text-muted">Remaining: <%= CurrencyUtil.format(((com.finance.model.Goal) pageContext.getAttribute("g")).getRemainingAmount()) %></span>
                                         </div>
 
                                         <!-- Action Deposit Button -->
@@ -183,16 +185,16 @@
 
                     <div class="row g-2 mb-3">
                         <div class="col-6">
-                            <label for="createGoalTarget" class="form-label small fw-semibold">Target Amount ($) *</label>
+                            <label for="createGoalTarget" class="form-label small fw-semibold">Target Amount (₹) *</label>
                             <div class="input-group">
-                                <span class="input-group-text">$</span>
+                                <span class="input-group-text">₹</span>
                                 <input type="number" step="0.01" min="0.01" class="form-control" id="createGoalTarget" name="targetAmount" placeholder="3000.00" required>
                             </div>
                         </div>
                         <div class="col-6">
-                            <label for="createGoalInitial" class="form-label small fw-semibold">Starting Saved ($)</label>
+                            <label for="createGoalInitial" class="form-label small fw-semibold">Starting Saved (₹)</label>
                             <div class="input-group">
-                                <span class="input-group-text">$</span>
+                                <span class="input-group-text">₹</span>
                                 <input type="number" step="0.01" min="0.00" class="form-control" id="createGoalInitial" name="initialSaved" value="0.00">
                             </div>
                         </div>
@@ -228,9 +230,9 @@
 
                 <div class="modal-body">
                     <p class="small text-muted mb-2">Goal: <strong id="depositGoalDesc"></strong></p>
-                    <label for="depositAmount" class="form-label small fw-semibold">Deposit Amount ($) *</label>
+                    <label for="depositAmount" class="form-label small fw-semibold">Deposit Amount (₹) *</label>
                     <div class="input-group">
-                        <span class="input-group-text">$</span>
+                        <span class="input-group-text">₹</span>
                         <input type="number" step="0.01" min="0.01" class="form-control" id="depositAmount" name="depositAmount" placeholder="100.00" required autofocus>
                     </div>
                 </div>
@@ -263,9 +265,9 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="editGoalTarget" class="form-label small fw-semibold">Target Amount ($) *</label>
+                        <label for="editGoalTarget" class="form-label small fw-semibold">Target Amount (₹) *</label>
                         <div class="input-group">
-                            <span class="input-group-text">$</span>
+                            <span class="input-group-text">₹</span>
                             <input type="number" step="0.01" min="0.01" class="form-control" id="editGoalTarget" name="targetAmount" required>
                         </div>
                     </div>

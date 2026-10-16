@@ -6,6 +6,7 @@ import com.finance.exception.UnauthorizedException;
 import com.finance.exception.ValidationException;
 import com.finance.model.Goal;
 import com.finance.util.AuditLogger;
+import com.finance.util.CurrencyUtil;
 import com.finance.util.ValidationUtil;
 
 import java.time.LocalDate;
@@ -43,7 +44,7 @@ public class GoalService {
         goal.setStatus(saved >= target ? "COMPLETED" : "IN_PROGRESS");
 
         goalDAO.save(goal);
-        auditLogger.log(userId, String.format("Created Goal: %s (Target: $%.2f)", cleanDesc, target), ipAddress);
+        auditLogger.log(userId, String.format("Created Goal: %s (Target: %s)", cleanDesc, CurrencyUtil.format(target)), ipAddress);
 
         return goal;
     }
@@ -85,7 +86,7 @@ public class GoalService {
         }
 
         goalDAO.addFunds(goalId, deposit, userId);
-        auditLogger.log(userId, String.format("Deposited $%.2f into Goal ID #%d", deposit, goalId), ipAddress);
+        auditLogger.log(userId, String.format("Deposited %s into Goal ID #%d", CurrencyUtil.format(deposit), goalId), ipAddress);
     }
 
     public void deleteGoal(int goalId, int userId, String ipAddress) {

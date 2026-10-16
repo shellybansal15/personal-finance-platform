@@ -196,7 +196,7 @@
                             </div>
                         </div>
                         <div style="text-align: right;">
-                            <div style="font-weight: 700; color: #34d399; font-size: 1rem;">+$4,500.00</div>
+                            <div style="font-weight: 700; color: #34d399; font-size: 1rem;">+₹4,500.00</div>
                             <div style="font-size: 0.72rem; color: #34d399;">100% Routed</div>
                         </div>
                     </div>
@@ -212,7 +212,7 @@
                             </div>
                         </div>
                         <div style="text-align: right;">
-                            <div style="font-weight: 700; color: #fbbf24; font-size: 1rem;">+$628.40</div>
+                            <div style="font-weight: 700; color: #fbbf24; font-size: 1rem;">+₹628.40</div>
                             <div style="font-size: 0.72rem; color: #fbbf24;">Reinvested</div>
                         </div>
                     </div>
@@ -228,7 +228,7 @@
                             </div>
                         </div>
                         <div style="text-align: right;">
-                            <div style="font-weight: 700; color: #c084fc; font-size: 1rem;">+$184/mo</div>
+                            <div style="font-weight: 700; color: #c084fc; font-size: 1rem;">+₹184/mo</div>
                             <div style="font-size: 0.72rem; color: #c084fc;">Recovered</div>
                         </div>
                     </div>
@@ -254,7 +254,7 @@
                     <div style="margin-bottom: 20px;">
                         <div style="display: flex; justify-content: space-between; font-size: 0.88rem; margin-bottom: 4px;">
                             <span style="color: #ffffff; font-weight: 500;">Living & Infrastructure</span>
-                            <span style="color: #34d399; font-weight: 600;">$1,650 / $2,800 (58%)</span>
+                            <span style="color: #34d399; font-weight: 600;">₹1,650 / ₹2,800 (58%)</span>
                         </div>
                         <div class="budget-bar-track">
                             <div class="budget-bar-fill safe" style="width: 58%;"></div>
@@ -265,7 +265,7 @@
                     <div style="margin-bottom: 20px;">
                         <div style="display: flex; justify-content: space-between; font-size: 0.88rem; margin-bottom: 4px;">
                             <span style="color: #ffffff; font-weight: 500;">Discretionary Dining & Entertainment</span>
-                            <span style="color: #fbbf24; font-weight: 600;">$780 / $950 (82% Warning)</span>
+                            <span style="color: #fbbf24; font-weight: 600;">₹780 / ₹950 (82% Warning)</span>
                         </div>
                         <div class="budget-bar-track">
                             <div class="budget-bar-fill warning" style="width: 82%;"></div>
@@ -276,7 +276,7 @@
                     <div style="margin-bottom: 24px;">
                         <div style="display: flex; justify-content: space-between; font-size: 0.88rem; margin-bottom: 4px;">
                             <span style="color: #ffffff; font-weight: 500;">Emergency Reserve Allocation</span>
-                            <span style="color: #34d399; font-weight: 600;">$1,200 / $1,200 (100% Target)</span>
+                            <span style="color: #34d399; font-weight: 600;">₹1,200 / ₹1,200 (100% Target)</span>
                         </div>
                         <div class="budget-bar-track">
                             <div class="budget-bar-fill safe" style="width: 100%;"></div>
@@ -356,7 +356,7 @@
                         <i class="bi bi-shield-fill-check"></i>
                     </div>
                     <h3 style="font-size: 1.25rem; font-weight: 700; color: #ffffff; margin-bottom: 8px;">6-Month Runway Vault</h3>
-                    <div style="font-size: 1.8rem; font-weight: 800; color: #34d399; margin-bottom: 12px;">$35,000</div>
+                    <div style="font-size: 1.8rem; font-weight: 800; color: #34d399; margin-bottom: 12px;">₹35,000</div>
                     <p style="color: var(--text-muted); font-size: 0.88rem; line-height: 1.5; margin-bottom: 16px;">
                         100% of liquid emergency requirements funded. Zero reliance on high-interest credit lines.
                     </p>
@@ -371,7 +371,7 @@
                         <i class="bi bi-graph-up-arrow"></i>
                     </div>
                     <h3 style="font-size: 1.25rem; font-weight: 700; color: #ffffff; margin-bottom: 8px;">Freedom Portfolio</h3>
-                    <div style="font-size: 1.8rem; font-weight: 800; color: #fbbf24; margin-bottom: 12px;">+$64,280</div>
+                    <div style="font-size: 1.8rem; font-weight: 800; color: #fbbf24; margin-bottom: 12px;">+₹64,280</div>
                     <p style="color: var(--text-muted); font-size: 0.88rem; line-height: 1.5; margin-bottom: 16px;">
                         Automated dollar-cost averaging into index funds and productive equities with +28.4% annualized yield.
                     </p>
@@ -386,7 +386,7 @@
                         <i class="bi bi-award-fill"></i>
                     </div>
                     <h3 style="font-size: 1.25rem; font-weight: 700; color: #ffffff; margin-bottom: 8px;">Debt Elimination Velocity</h3>
-                    <div style="font-size: 1.8rem; font-weight: 800; color: #38bdf8; margin-bottom: 12px;">$0.00 Debt</div>
+                    <div style="font-size: 1.8rem; font-weight: 800; color: #38bdf8; margin-bottom: 12px;">₹0.00 Debt</div>
                     <p style="color: var(--text-muted); font-size: 0.88rem; line-height: 1.5; margin-bottom: 16px;">
                         Systematic debt payoff velocity achieved 11 months ahead of original amortized projections.
                     </p>

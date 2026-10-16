@@ -13,12 +13,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
+import com.finance.util.CurrencyUtil;
+
 import java.io.IOException;
 import java.io.OutputStream;
-import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.Future;
 
 /**
@@ -112,9 +112,6 @@ public class ExpenseServlet extends HttpServlet {
         String action = req.getParameter("action");
         String clientIp = getClientIp(req);
 
-        // Indian Rupee formatter for flash messages
-        NumberFormat inrFormat = NumberFormat.getCurrencyInstance(new Locale("en", "IN"));
-
         try {
             if ("add".equalsIgnoreCase(action)) {
                 int categoryId = Integer.parseInt(req.getParameter("categoryId"));
@@ -124,8 +121,7 @@ public class ExpenseServlet extends HttpServlet {
                 String paymentMode = req.getParameter("paymentMode");
 
                 Expense saved = expenseService.addExpense(userId, categoryId, amount, date, note, paymentMode, clientIp);
-                String formattedAmt = inrFormat.format(saved.getAmount());
-                session.setAttribute("flashSuccess", "Expense of " + formattedAmt + " recorded successfully!");
+                session.setAttribute("flashSuccess", "Expense of " + CurrencyUtil.format(saved.getAmount()) + " recorded successfully!");
 
             } else if ("edit".equalsIgnoreCase(action)) {
                 int expenseId = Integer.parseInt(req.getParameter("expenseId"));

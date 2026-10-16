@@ -6,6 +6,7 @@ import com.finance.dao.GoalDAO;
 import com.finance.model.Budget;
 import com.finance.model.Expense;
 import com.finance.model.Goal;
+import com.finance.util.CurrencyUtil;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;
@@ -71,11 +72,11 @@ public class ReportService {
                     String cleanNote = exp.getNote() != null ? exp.getNote().replace("\"", "\"\"") : "";
                     String created = exp.getCreatedAt() != null ? exp.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) : "";
                     String paymentMode = exp.getPaymentMode() != null ? exp.getPaymentMode().getDisplayName() : "UPI";
-                    writer.printf("%d,%s,\"%s\",%.2f,\"%s\",\"%s\",%s%n",
+                    writer.printf("%d,%s,\"%s\",\"%s\",\"%s\",\"%s\",%s%n",
                             exp.getId(),
                             exp.getDate(),
                             exp.getCategoryName() != null ? exp.getCategoryName() : "General",
-                            exp.getAmount(),
+                            CurrencyUtil.format(exp.getAmount()),
                             paymentMode,
                             cleanNote,
                             created
@@ -107,21 +108,23 @@ public class ReportService {
             StringBuilder sb = new StringBuilder();
             sb.append("=== PERSONAL FINANCIAL SUMMARY REPORT ===\n");
             sb.append("Generated On: ").append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))).append("\n\n");
-            sb.append(String.format("Total Spent (This Month): \u20b9%.2f%n", monthSpent));
-            sb.append(String.format("Total Spent (All-Time):   \u20b9%.2f%n", allTimeSpent));
-            sb.append(String.format("Active Budgets Total:     \u20b9%.2f%n", totalBudget));
-            sb.append(String.format("Total Goals Saved:        \u20b9%.2f%n%n", totalSaved));
+            sb.append("Total Spent (This Month): ").append(CurrencyUtil.format(monthSpent)).append("\n");
+            sb.append("Total Spent (All-Time):   ").append(CurrencyUtil.format(allTimeSpent)).append("\n");
+            sb.append("Active Budgets Total:     ").append(CurrencyUtil.format(totalBudget)).append("\n");
+            sb.append("Total Goals Saved:        ").append(CurrencyUtil.format(totalSaved)).append("\n\n");
 
             sb.append("--- ACTIVE BUDGETS ---\n");
             for (Budget b : budgets) {
-                sb.append(String.format("- %s: Spent \u20b9%.2f of \u20b9%.2f (%.1f%%)%n",
-                        b.getCategoryName(), b.getSpentAmount(), b.getAmount(), b.getProgressPercentage()));
+                sb.append(String.format("- %s: Spent %s of %s (%.1f%%)%n",
+                        b.getCategoryName(), CurrencyUtil.format(b.getSpentAmount()),
+                        CurrencyUtil.format(b.getAmount()), b.getProgressPercentage()));
             }
 
             sb.append("\n--- SAVINGS GOALS ---\n");
             for (Goal g : goals) {
-                sb.append(String.format("- %s: Saved \u20b9%.2f of \u20b9%.2f [Status: %s]%n",
-                        g.getDescription(), g.getSavedAmount(), g.getTargetAmount(), g.getStatus()));
+                sb.append(String.format("- %s: Saved %s of %s [Status: %s]%n",
+                        g.getDescription(), CurrencyUtil.format(g.getSavedAmount()),
+                        CurrencyUtil.format(g.getTargetAmount()), g.getStatus()));
             }
 
             return sb.toString();

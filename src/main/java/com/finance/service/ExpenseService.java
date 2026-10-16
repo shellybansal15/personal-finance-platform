@@ -9,6 +9,7 @@ import com.finance.model.Category;
 import com.finance.model.Expense;
 import com.finance.model.PaymentMode;
 import com.finance.util.AuditLogger;
+import com.finance.util.CurrencyUtil;
 import com.finance.util.ValidationUtil;
 
 import java.time.LocalDate;
@@ -54,7 +55,7 @@ public class ExpenseService {
         expense.setPaymentMode(paymentMode);
 
         expenseDAO.save(expense);
-        auditLogger.log(userId, String.format("Added expense of \u20b9%.2f via %s (ID #%d)", amount, paymentMode.getDisplayName(), expense.getId()), ipAddress);
+        auditLogger.log(userId, String.format("Added expense of %s via %s (ID #%d)", CurrencyUtil.format(amount), paymentMode.getDisplayName(), expense.getId()), ipAddress);
 
         return expense;
     }
@@ -88,7 +89,7 @@ public class ExpenseService {
         exp.setPaymentMode(paymentMode);
 
         expenseDAO.update(exp);
-        auditLogger.log(userId, String.format("Updated expense ID #%d to \u20b9%.2f via %s", expenseId, amount, paymentMode.getDisplayName()), ipAddress);
+        auditLogger.log(userId, String.format("Updated expense ID #%d to %s via %s", expenseId, CurrencyUtil.format(amount), paymentMode.getDisplayName()), ipAddress);
     }
 
     // Overload for backward compatibility

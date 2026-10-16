@@ -76,4 +76,21 @@ document.addEventListener('DOMContentLoaded', function () {
             if (bsAlert) bsAlert.close();
         }, 5000);
     });
+
+    // 4. Generic loading state for forms marked with data-loading-form
+    document.querySelectorAll('form[data-loading-form]').forEach(function (form) {
+        form.addEventListener('submit', function () {
+            const btn = form.querySelector('.btn-auth-submit, button[type="submit"]');
+            if (!btn || btn.disabled) {
+                return;
+            }
+            btn.disabled = true;
+            btn.classList.add('is-loading');
+            btn.setAttribute('aria-busy', 'true');
+            const hint = form.querySelector('.auth-loading-hint');
+            if (hint) {
+                hint.classList.remove('d-none');
+            }
+        });
+    });
 });

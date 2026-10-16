@@ -91,8 +91,8 @@
                     </a>
                 </c:when>
                 <c:otherwise>
-                    <a href="${pageContext.request.contextPath}/login" class="btn-nav-ghost">Sign In</a>
-                    <a href="${pageContext.request.contextPath}/register" class="btn-nav-primary">
+                    <a href="${pageContext.request.contextPath}/login" class="btn-nav-ghost js-nav-loading" data-loading-text="Opening…">Sign In</a>
+                    <a href="${pageContext.request.contextPath}/register" class="btn-nav-primary js-nav-loading" data-loading-text="Opening…">
                         <span>Get Started</span>
                         <i class="bi bi-arrow-right"></i>
                     </a>
@@ -114,8 +114,8 @@
                 <a href="${dashHref}" class="mobile-nav-link accent">${dashLabel}</a>
             </c:when>
             <c:otherwise>
-                <a href="${pageContext.request.contextPath}/login" class="mobile-nav-link">Sign In</a>
-                <a href="${pageContext.request.contextPath}/register" class="mobile-nav-link accent">Get Started</a>
+                <a href="${pageContext.request.contextPath}/login" class="mobile-nav-link js-nav-loading" data-loading-text="Opening…">Sign In</a>
+                <a href="${pageContext.request.contextPath}/register" class="mobile-nav-link accent js-nav-loading" data-loading-text="Opening…">Get Started</a>
             </c:otherwise>
         </c:choose>
     </nav>
@@ -154,7 +154,7 @@
                         </a>
                     </c:when>
                     <c:otherwise>
-                        <a href="${pageContext.request.contextPath}/login" class="btn-hero-secondary">
+                        <a href="${pageContext.request.contextPath}/login" class="btn-hero-secondary js-nav-loading" data-loading-text="Connecting…">
                             <i class="bi bi-box-arrow-in-right"></i>
                             <span>Sign In</span>
                         </a>
@@ -375,11 +375,11 @@
                             </a>
                         </c:when>
                         <c:otherwise>
-                            <a href="${pageContext.request.contextPath}/register" class="btn-hero-primary btn-lg">
+                            <a href="${pageContext.request.contextPath}/register" class="btn-hero-primary btn-lg js-nav-loading" data-loading-text="Connecting…">
                                 <i class="bi bi-person-plus-fill"></i>
                                 <span>Create Free Account</span>
                             </a>
-                            <a href="${pageContext.request.contextPath}/login" class="btn-hero-secondary btn-lg">
+                            <a href="${pageContext.request.contextPath}/login" class="btn-hero-secondary btn-lg js-nav-loading" data-loading-text="Connecting…">
                                 <i class="bi bi-box-arrow-in-right"></i>
                                 <span>Sign In</span>
                             </a>

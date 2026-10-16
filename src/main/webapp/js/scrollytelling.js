@@ -181,6 +181,7 @@
         initInrCounters();
         initMobileNav();
         initLandingFlash();
+        initNavLoadingFeedback();
 
         if (hudRewindBtn) {
             hudRewindBtn.addEventListener('click', (e) => {
@@ -378,6 +379,36 @@
             closeBtn.addEventListener('click', dismiss);
         }
         setTimeout(dismiss, 6000);
+    }
+
+    /**
+     * Visual feedback when navigating to login/register (helps during Render cold starts).
+     */
+    function initNavLoadingFeedback() {
+        const links = document.querySelectorAll('a.js-nav-loading');
+        if (!links.length) return;
+
+        links.forEach((link) => {
+            link.addEventListener('click', function (e) {
+                if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) {
+                    return;
+                }
+                if (link.classList.contains('is-loading')) {
+                    e.preventDefault();
+                    return;
+                }
+
+                const loadingText = link.getAttribute('data-loading-text') || 'Loading…';
+                link.classList.add('is-loading');
+                link.setAttribute('aria-busy', 'true');
+                link.setAttribute('aria-disabled', 'true');
+                link.dataset.originalHtml = link.innerHTML;
+                link.innerHTML =
+                    '<span class="nav-btn-spinner" aria-hidden="true"></span>' +
+                    '<span>' + loadingText + '</span>';
+                // Navigation continues; spinner stays visible until the next page paints
+            });
+        });
     }
 
     // Initialize when DOM content is ready

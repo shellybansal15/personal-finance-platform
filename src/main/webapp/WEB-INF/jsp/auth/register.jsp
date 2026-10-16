@@ -54,7 +54,7 @@
             <!-- Flash Notifications -->
             <%@ include file="/WEB-INF/jsp/fragments/alerts.jsp" %>
 
-            <form action="${pageContext.request.contextPath}/register" method="POST" autocomplete="on">
+            <form action="${pageContext.request.contextPath}/register" method="POST" autocomplete="on" id="registerForm" data-loading-form>
                 <!-- CSRF Token -->
                 <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
 
@@ -108,9 +108,18 @@
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold mb-3">
-                    <i class="bi bi-person-check-fill me-1"></i> Register Account
+                <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold mb-3 btn-auth-submit" id="registerSubmitBtn">
+                    <span class="btn-label">
+                        <i class="bi bi-person-check-fill me-1"></i> Register Account
+                    </span>
+                    <span class="btn-loading-label" aria-hidden="true">
+                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        Creating account…
+                    </span>
                 </button>
+                <p class="text-muted small text-center mb-0 auth-loading-hint d-none" id="registerLoadingHint">
+                    Connecting to the server — first load after idle may take a moment.
+                </p>
             </form>
 
             <div class="text-center mt-3">
@@ -122,5 +131,26 @@
         </div>
     </div>
 </div>
+
+<script>
+(function () {
+    var form = document.getElementById('registerForm');
+    var btn = document.getElementById('registerSubmitBtn');
+    var hint = document.getElementById('registerLoadingHint');
+    if (form && btn) {
+        form.addEventListener('submit', function () {
+            if (btn.disabled) {
+                return;
+            }
+            btn.disabled = true;
+            btn.classList.add('is-loading');
+            btn.setAttribute('aria-busy', 'true');
+            if (hint) {
+                hint.classList.remove('d-none');
+            }
+        });
+    }
+})();
+</script>
 
 <%@ include file="/WEB-INF/jsp/fragments/footer.jsp" %>

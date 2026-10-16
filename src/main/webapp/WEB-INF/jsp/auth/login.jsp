@@ -61,7 +61,7 @@
 
             <%@ include file="/WEB-INF/jsp/fragments/alerts.jsp" %>
 
-            <form action="${pageContext.request.contextPath}/login" method="POST" autocomplete="on" id="loginForm">
+            <form action="${pageContext.request.contextPath}/login" method="POST" autocomplete="on" id="loginForm" data-loading-form>
                 <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
 
                 <!-- Persona / role selector -->
@@ -106,9 +106,18 @@
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold mb-3">
-                    <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
+                <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold mb-3 btn-auth-submit" id="loginSubmitBtn">
+                    <span class="btn-label">
+                        <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
+                    </span>
+                    <span class="btn-loading-label" aria-hidden="true">
+                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        Signing in…
+                    </span>
                 </button>
+                <p class="text-muted small text-center mb-0 auth-loading-hint d-none" id="loginLoadingHint">
+                    Connecting to the server — first load after idle may take a moment.
+                </p>
             </form>
 
             <div class="text-center mt-3">
@@ -160,6 +169,23 @@
             syncPersonaCards();
         }
     };
+
+    var loginForm = document.getElementById('loginForm');
+    var loginBtn = document.getElementById('loginSubmitBtn');
+    var loginHint = document.getElementById('loginLoadingHint');
+    if (loginForm && loginBtn) {
+        loginForm.addEventListener('submit', function () {
+            if (loginBtn.disabled) {
+                return;
+            }
+            loginBtn.disabled = true;
+            loginBtn.classList.add('is-loading');
+            loginBtn.setAttribute('aria-busy', 'true');
+            if (loginHint) {
+                loginHint.classList.remove('d-none');
+            }
+        });
+    }
 })();
 </script>
 

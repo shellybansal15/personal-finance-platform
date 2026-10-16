@@ -309,6 +309,46 @@ body {
     color: #ffffff;
 }
 
+/* Auth form loading / cold-start feedback */
+.btn-auth-submit {
+    position: relative;
+    min-height: 2.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    transition: opacity 0.2s ease, transform 0.15s ease;
+}
+
+.btn-auth-submit .btn-loading-label {
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-auth-submit.is-loading {
+    pointer-events: none;
+    opacity: 0.92;
+    cursor: wait;
+}
+
+.btn-auth-submit.is-loading .btn-label {
+    display: none;
+}
+
+.btn-auth-submit.is-loading .btn-loading-label {
+    display: inline-flex;
+}
+
+.auth-loading-hint {
+    animation: authHintFade 0.35s ease;
+}
+
+@keyframes authHintFade {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 /* Floating Action Button (FAB) */
 .fab-btn {
     position: fixed;

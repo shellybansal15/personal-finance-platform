@@ -570,6 +570,28 @@ body {
     transform: translateY(-2px);
 }
 
+/* Landing auth CTA loading (cold-start feedback) */
+a.js-nav-loading.is-loading {
+    pointer-events: none;
+    opacity: 0.88;
+    cursor: wait;
+}
+
+.nav-btn-spinner {
+    width: 1em;
+    height: 1em;
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    display: inline-block;
+    animation: navSpin 0.7s linear infinite;
+    flex-shrink: 0;
+}
+
+@keyframes navSpin {
+    to { transform: rotate(360deg); }
+}
+
 /* Animated Scroll Prompt Indicator */
 .scroll-indicator-wrap {
     margin-top: 50px;

@@ -100,10 +100,21 @@ public class AuthServlet extends HttpServlet {
             if (loginAsRole == null || loginAsRole.trim().isEmpty()) {
                 throw new AppException("Please select whether you are logging in as User or Administrator.");
             }
-            // Safety net: if the DB was wiped or never seeded, recreate demo personas + MVP data
-            // before authentication so Fill → Sign In never hits "Failed to find user by email".
+            // Bulletproof lazy-registration for demo personas (does not rely on AppListener /
+            // contextInitialized alone — cloud DBs can reset or skip listeners).
+            // Migrates schema, creates admin@finance.com / user@finance.com if missing,
+            // resets demo passwords to Fill-button values, and seeds MVP starter data.
             if (DatabaseSeeder.isDemoEmail(email)) {
-                DatabaseSeeder.ensureDemoWorkspace();
+                try {
+                    DatabaseSeeder.ensureDemoWorkspace();
+                } catch (Exception seedEx) {
+                    System.err.println("[AuthServlet] Demo workspace ensure failed: "
+                            + seedEx.getMessage());
+                    seedEx.printStackTrace();
+                    throw new AppException(
+                            "Demo account setup failed. Please retry in a moment. "
+                                    + "Detail: " + seedEx.getMessage());
+                }
             }
             User user = userService.loginWithRole(email, password, loginAsRole, clientIp);
 

@@ -85,8 +85,13 @@ public class DatabaseSeeder implements ServletContextListener {
     /**
      * Idempotent entry point used at startup and before demo credential logins.
      * Safe to call concurrently; only one thread performs the seed work at a time.
+     * Always migrates schema first so older cloud DBs (missing occupation /
+     * payment_mode) cannot surface as "Failed to find user by email".
      */
     public static void ensureDemoWorkspace() throws DatabaseException {
+        // Schema must be current before any SELECT that references new columns.
+        SchemaMigrator.ensureSchema();
+
         if (seedCompleted) {
             // Still verify accounts exist (e.g. DB wiped while app stayed up)
             UserDAO userDAO = new UserDAO();
@@ -98,6 +103,10 @@ public class DatabaseSeeder implements ServletContextListener {
         }
 
         synchronized (SEED_LOCK) {
+            // Re-run schema inside the lock in case another thread raced us
+            // against a freshly provisioned empty database.
+            SchemaMigrator.ensureSchema();
+
             if (seedCompleted) {
                 UserDAO userDAO = new UserDAO();
                 if (userDAO.findByEmail(DEMO_ADMIN_EMAIL).isPresent()
@@ -170,8 +179,35 @@ public class DatabaseSeeder implements ServletContextListener {
                             String role, String occupation) throws DatabaseException {
         Optional<User> existing = userDAO.findByEmail(email);
         if (existing.isPresent()) {
-            System.out.println("[DatabaseSeeder] Already present: " + email);
-            return existing.get();
+            User user = existing.get();
+            // Demo personas: keep credentials / role aligned with Fill buttons even if
+            // an older seed left a different hash or role on the row.
+            if (isDemoEmail(email)) {
+                boolean dirty = false;
+                if (passwordHash != null && !passwordHash.equals(user.getPasswordHash())) {
+                    userDAO.updatePassword(user.getId(), passwordHash);
+                    user.setPasswordHash(passwordHash);
+                    dirty = true;
+                }
+                if (role != null && !role.equalsIgnoreCase(user.getRole())) {
+                    userDAO.updateRole(user.getId(), role);
+                    user.setRole(role);
+                    dirty = true;
+                }
+                if (!"ACTIVE".equalsIgnoreCase(user.getStatus())) {
+                    userDAO.updateStatus(user.getId(), "ACTIVE");
+                    user.setStatus("ACTIVE");
+                    dirty = true;
+                }
+                if (dirty) {
+                    System.out.println("[DatabaseSeeder] Refreshed demo account: " + email);
+                } else {
+                    System.out.println("[DatabaseSeeder] Already present: " + email);
+                }
+            } else {
+                System.out.println("[DatabaseSeeder] Already present: " + email);
+            }
+            return user;
         }
 
         User user = new User();

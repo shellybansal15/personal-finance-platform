@@ -14,13 +14,14 @@ import java.util.Optional;
  * [DAO & JDBC Rubric: UserDAO implementing BaseDAO<User>]
  * Manages all user-related persistence operations with PreparedStatement
  * and try-with-resources to guarantee safe connection pooling and prevent SQL injection.
+ * Updated: Includes occupation field in all queries.
  * ============================================================================
  */
 public class UserDAO implements BaseDAO<User> {
 
     @Override
     public Optional<User> findById(int id) throws DatabaseException {
-        String sql = "SELECT id, name, email, password_hash, role, status, created_at FROM users WHERE id = ?";
+        String sql = "SELECT id, name, email, password_hash, role, status, occupation, created_at FROM users WHERE id = ?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -37,7 +38,7 @@ public class UserDAO implements BaseDAO<User> {
     }
 
     public Optional<User> findByEmail(String email) throws DatabaseException {
-        String sql = "SELECT id, name, email, password_hash, role, status, created_at FROM users WHERE email = ?";
+        String sql = "SELECT id, name, email, password_hash, role, status, occupation, created_at FROM users WHERE email = ?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -55,7 +56,7 @@ public class UserDAO implements BaseDAO<User> {
 
     @Override
     public List<User> findAll() throws DatabaseException {
-        String sql = "SELECT id, name, email, password_hash, role, status, created_at FROM users ORDER BY id ASC";
+        String sql = "SELECT id, name, email, password_hash, role, status, occupation, created_at FROM users ORDER BY id ASC";
         List<User> users = new ArrayList<>();
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
@@ -72,7 +73,7 @@ public class UserDAO implements BaseDAO<User> {
 
     @Override
     public boolean save(User user) throws DatabaseException {
-        String sql = "INSERT INTO users (name, email, password_hash, role, status, created_at) VALUES (?, ?, ?, ?, ?, NOW())";
+        String sql = "INSERT INTO users (name, email, password_hash, role, status, occupation, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
@@ -81,6 +82,7 @@ public class UserDAO implements BaseDAO<User> {
             ps.setString(3, user.getPasswordHash());
             ps.setString(4, user.getRole() != null ? user.getRole() : "USER");
             ps.setString(5, user.getStatus() != null ? user.getStatus() : "ACTIVE");
+            ps.setString(6, user.getOccupation());  // Nullable
 
             int affectedRows = ps.executeUpdate();
             if (affectedRows > 0) {
@@ -99,7 +101,7 @@ public class UserDAO implements BaseDAO<User> {
 
     @Override
     public boolean update(User user) throws DatabaseException {
-        String sql = "UPDATE users SET name = ?, email = ?, role = ?, status = ? WHERE id = ?";
+        String sql = "UPDATE users SET name = ?, email = ?, role = ?, status = ?, occupation = ? WHERE id = ?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -107,7 +109,8 @@ public class UserDAO implements BaseDAO<User> {
             ps.setString(2, user.getEmail());
             ps.setString(3, user.getRole());
             ps.setString(4, user.getStatus());
-            ps.setInt(5, user.getId());
+            ps.setString(5, user.getOccupation());
+            ps.setInt(6, user.getId());
 
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -182,8 +185,22 @@ public class UserDAO implements BaseDAO<User> {
         return 0;
     }
 
+    public int countUsersByStatus(String status) throws DatabaseException {
+        String sql = "SELECT COUNT(*) FROM users WHERE status = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, status);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            throw new DatabaseException("Failed to count users by status: " + status, e);
+        }
+        return 0;
+    }
+
     public List<User> searchUsers(String query, String role, String status, int offset, int limit) throws DatabaseException {
-        StringBuilder sql = new StringBuilder("SELECT id, name, email, password_hash, role, status, created_at FROM users WHERE 1=1 ");
+        StringBuilder sql = new StringBuilder("SELECT id, name, email, password_hash, role, status, occupation, created_at FROM users WHERE 1=1 ");
         List<Object> params = new ArrayList<>();
 
         if (query != null && !query.trim().isEmpty()) {
@@ -269,6 +286,7 @@ public class UserDAO implements BaseDAO<User> {
         user.setPasswordHash(rs.getString("password_hash"));
         user.setRole(rs.getString("role"));
         user.setStatus(rs.getString("status"));
+        user.setOccupation(rs.getString("occupation")); // Nullable
         Timestamp ts = rs.getTimestamp("created_at");
         if (ts != null) {
             user.setCreatedAt(ts.toLocalDateTime());

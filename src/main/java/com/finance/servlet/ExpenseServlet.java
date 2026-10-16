@@ -3,6 +3,7 @@ package com.finance.servlet;
 import com.finance.exception.AppException;
 import com.finance.model.Category;
 import com.finance.model.Expense;
+import com.finance.model.PaymentMode;
 import com.finance.service.ExpenseService;
 import com.finance.service.ReportService;
 import jakarta.servlet.ServletException;
@@ -14,8 +15,10 @@ import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.Future;
 
 /**
@@ -23,6 +26,7 @@ import java.util.concurrent.Future;
  * [Servlets & Multithreading Rubric: ExpenseServlet]
  * Controller for expense tracking, filtering, pagination, modal CRUD operations,
  * and asynchronous background CSV exports using ReportService's ExecutorService.
+ * Updated: Handles paymentMode parameter in add/edit, paymentMode filter, INR formatting.
  * ============================================================================
  */
 @WebServlet(urlPatterns = {"/user/expenses"})
@@ -63,6 +67,12 @@ public class ExpenseServlet extends HttpServlet {
         String endDateStr = req.getParameter("endDate");
         LocalDate endDate = (endDateStr != null && !endDateStr.isEmpty()) ? LocalDate.parse(endDateStr) : null;
 
+        // New: Payment Mode filter
+        String paymentModeFilter = req.getParameter("paymentMode");
+        if (paymentModeFilter != null && (paymentModeFilter.isEmpty() || "ALL".equalsIgnoreCase(paymentModeFilter))) {
+            paymentModeFilter = null;
+        }
+
         int page = 1;
         String pageStr = req.getParameter("page");
         if (pageStr != null && !pageStr.isEmpty()) {
@@ -72,19 +82,21 @@ public class ExpenseServlet extends HttpServlet {
         }
         int pageSize = 10;
 
-        int totalRecords = expenseService.countFilteredExpenses(userId, categoryId, startDate, endDate);
+        int totalRecords = expenseService.countFilteredExpenses(userId, categoryId, startDate, endDate, paymentModeFilter);
         int totalPages = (int) Math.ceil((double) totalRecords / pageSize);
         if (totalPages == 0) totalPages = 1;
 
-        List<Expense> expenses = expenseService.getFilteredExpenses(userId, categoryId, startDate, endDate, page, pageSize);
+        List<Expense> expenses = expenseService.getFilteredExpenses(userId, categoryId, startDate, endDate, paymentModeFilter, page, pageSize);
         List<Category> categories = expenseService.getAllCategories();
 
         req.setAttribute("expenses", expenses);
         req.setAttribute("categories", categories);
+        req.setAttribute("paymentModes", PaymentMode.values());
         req.setAttribute("currentPage", page);
         req.setAttribute("totalPages", totalPages);
         req.setAttribute("totalRecords", totalRecords);
         req.setAttribute("selectedCategoryId", categoryId);
+        req.setAttribute("selectedPaymentMode", req.getParameter("paymentMode"));
         req.setAttribute("startDate", startDateStr);
         req.setAttribute("endDate", endDateStr);
 
@@ -100,15 +112,20 @@ public class ExpenseServlet extends HttpServlet {
         String action = req.getParameter("action");
         String clientIp = getClientIp(req);
 
+        // Indian Rupee formatter for flash messages
+        NumberFormat inrFormat = NumberFormat.getCurrencyInstance(new Locale("en", "IN"));
+
         try {
             if ("add".equalsIgnoreCase(action)) {
                 int categoryId = Integer.parseInt(req.getParameter("categoryId"));
                 String amount = req.getParameter("amount");
                 String date = req.getParameter("date");
                 String note = req.getParameter("note");
+                String paymentMode = req.getParameter("paymentMode");
 
-                expenseService.addExpense(userId, categoryId, amount, date, note, clientIp);
-                session.setAttribute("flashSuccess", "Success: Expense of $" + amount + " recorded successfully!");
+                Expense saved = expenseService.addExpense(userId, categoryId, amount, date, note, paymentMode, clientIp);
+                String formattedAmt = inrFormat.format(saved.getAmount());
+                session.setAttribute("flashSuccess", "Expense of " + formattedAmt + " recorded successfully!");
 
             } else if ("edit".equalsIgnoreCase(action)) {
                 int expenseId = Integer.parseInt(req.getParameter("expenseId"));
@@ -116,14 +133,15 @@ public class ExpenseServlet extends HttpServlet {
                 String amount = req.getParameter("amount");
                 String date = req.getParameter("date");
                 String note = req.getParameter("note");
+                String paymentMode = req.getParameter("paymentMode");
 
-                expenseService.updateExpense(expenseId, userId, categoryId, amount, date, note, clientIp);
-                session.setAttribute("flashSuccess", "Success: Expense record updated successfully!");
+                expenseService.updateExpense(expenseId, userId, categoryId, amount, date, note, paymentMode, clientIp);
+                session.setAttribute("flashSuccess", "Expense record updated successfully!");
 
             } else if ("delete".equalsIgnoreCase(action)) {
                 int expenseId = Integer.parseInt(req.getParameter("expenseId"));
                 expenseService.deleteExpense(expenseId, userId, clientIp);
-                session.setAttribute("flashSuccess", "Success: Expense deleted successfully!");
+                session.setAttribute("flashSuccess", "Expense deleted successfully!");
             }
         } catch (AppException e) {
             session.setAttribute("flashError", e.getMessage());

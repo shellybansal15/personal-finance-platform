@@ -2,6 +2,7 @@
 -- Online Personal Finance Management Platform
 -- Database Schema: finance_db
 -- Target Database: MySQL 8.0+
+-- Updated: Added payment_mode to expenses, occupation to users
 -- ============================================================================
 
 CREATE DATABASE IF NOT EXISTS finance_db 
@@ -21,6 +22,15 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash VARCHAR(255) NOT NULL,
     role ENUM('USER', 'ADMIN') NOT NULL DEFAULT 'USER',
     status ENUM('ACTIVE', 'BLOCKED') NOT NULL DEFAULT 'ACTIVE',
+    occupation ENUM(
+        'Student',
+        'Salaried Employee',
+        'Self-Employed',
+        'Business Owner',
+        'Homemaker',
+        'Retired',
+        'Other'
+    ) NULL DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_user_email (email),
     INDEX idx_user_role_status (role, status)
@@ -40,6 +50,7 @@ CREATE TABLE IF NOT EXISTS categories (
 -- ----------------------------------------------------------------------------
 -- 3. Table: expenses
 -- [Rubric: CHECK (amount > 0), Foreign Keys, AES-encrypted note]
+-- Updated: Added payment_mode ENUM column
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS expenses (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -48,6 +59,16 @@ CREATE TABLE IF NOT EXISTS expenses (
     amount DECIMAL(10, 2) NOT NULL,
     expense_date DATE NOT NULL,
     note TEXT, -- Contains AES-256 encrypted string
+    payment_mode ENUM(
+        'UPI',
+        'NET_BANKING',
+        'CREDIT_CARD',
+        'DEBIT_CARD',
+        'CASH',
+        'WALLET',
+        'CHEQUE',
+        'OTHER'
+    ) NOT NULL DEFAULT 'UPI',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT chk_expense_amount CHECK (amount > 0),
     CONSTRAINT fk_expenses_user FOREIGN KEY (user_id) 

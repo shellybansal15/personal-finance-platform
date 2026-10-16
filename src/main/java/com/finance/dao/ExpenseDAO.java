@@ -2,6 +2,7 @@ package com.finance.dao;
 
 import com.finance.exception.DatabaseException;
 import com.finance.model.Expense;
+import com.finance.model.PaymentMode;
 import com.finance.util.DBConnection;
 import com.finance.util.EncryptionUtil;
 
@@ -25,13 +26,14 @@ import java.util.Optional;
  * Manages expense persistence, filtering, pagination, and statistical aggregations.
  * Transparently encrypts/decrypts the note column using AES-256 (EncryptionUtil).
  * Employs Collections: List<Expense>, Map<String, Double> for Chart.js aggregations.
+ * Updated: Includes payment_mode in all CRUD operations, adds getSpendingByPaymentMode().
  * ============================================================================
  */
 public class ExpenseDAO implements BaseDAO<Expense> {
 
     @Override
     public Optional<Expense> findById(int id) throws DatabaseException {
-        String sql = "SELECT e.id, e.user_id, e.category_id, e.amount, e.expense_date, e.note, e.created_at, c.name AS category_name " +
+        String sql = "SELECT e.id, e.user_id, e.category_id, e.amount, e.expense_date, e.note, e.payment_mode, e.created_at, c.name AS category_name " +
                      "FROM expenses e JOIN categories c ON e.category_id = c.id WHERE e.id = ?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -50,7 +52,7 @@ public class ExpenseDAO implements BaseDAO<Expense> {
 
     @Override
     public List<Expense> findAll() throws DatabaseException {
-        String sql = "SELECT e.id, e.user_id, e.category_id, e.amount, e.expense_date, e.note, e.created_at, c.name AS category_name " +
+        String sql = "SELECT e.id, e.user_id, e.category_id, e.amount, e.expense_date, e.note, e.payment_mode, e.created_at, c.name AS category_name " +
                      "FROM expenses e JOIN categories c ON e.category_id = c.id ORDER BY e.expense_date DESC";
         List<Expense> list = new ArrayList<>();
         try (Connection conn = DBConnection.getConnection();
@@ -68,8 +70,8 @@ public class ExpenseDAO implements BaseDAO<Expense> {
 
     @Override
     public boolean save(Expense expense) throws DatabaseException {
-        String sql = "INSERT INTO expenses (user_id, category_id, amount, expense_date, note, created_at) " +
-                     "VALUES (?, ?, ?, ?, ?, NOW())";
+        String sql = "INSERT INTO expenses (user_id, category_id, amount, expense_date, note, payment_mode, created_at) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, NOW())";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
@@ -79,6 +81,7 @@ public class ExpenseDAO implements BaseDAO<Expense> {
             ps.setDate(4, Date.valueOf(expense.getDate() != null ? expense.getDate() : LocalDate.now()));
             // [Security Rubric: AES-Encrypt Expense Note]
             ps.setString(5, EncryptionUtil.encrypt(expense.getNote()));
+            ps.setString(6, expense.getPaymentMode() != null ? expense.getPaymentMode().name() : PaymentMode.UPI.name());
 
             int affected = ps.executeUpdate();
             if (affected > 0) {
@@ -97,7 +100,7 @@ public class ExpenseDAO implements BaseDAO<Expense> {
 
     @Override
     public boolean update(Expense expense) throws DatabaseException {
-        String sql = "UPDATE expenses SET category_id = ?, amount = ?, expense_date = ?, note = ? " +
+        String sql = "UPDATE expenses SET category_id = ?, amount = ?, expense_date = ?, note = ?, payment_mode = ? " +
                      "WHERE id = ? AND user_id = ?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -107,8 +110,9 @@ public class ExpenseDAO implements BaseDAO<Expense> {
             ps.setDate(3, Date.valueOf(expense.getDate()));
             // [Security Rubric: AES-Encrypt Expense Note]
             ps.setString(4, EncryptionUtil.encrypt(expense.getNote()));
-            ps.setInt(5, expense.getId());
-            ps.setInt(6, expense.getUserId());
+            ps.setString(5, expense.getPaymentMode() != null ? expense.getPaymentMode().name() : PaymentMode.UPI.name());
+            ps.setInt(6, expense.getId());
+            ps.setInt(7, expense.getUserId());
 
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -144,10 +148,15 @@ public class ExpenseDAO implements BaseDAO<Expense> {
 
     /**
      * Retrieves filtered and paginated list of expenses for a specific user.
+     * Supports optional filter by categoryId, startDate, endDate, and paymentMode.
      */
     public List<Expense> findByUserId(int userId, Integer categoryId, LocalDate startDate, LocalDate endDate, int offset, int limit) throws DatabaseException {
+        return findByUserId(userId, categoryId, startDate, endDate, null, offset, limit);
+    }
+
+    public List<Expense> findByUserId(int userId, Integer categoryId, LocalDate startDate, LocalDate endDate, String paymentMode, int offset, int limit) throws DatabaseException {
         StringBuilder sql = new StringBuilder(
-                "SELECT e.id, e.user_id, e.category_id, e.amount, e.expense_date, e.note, e.created_at, c.name AS category_name " +
+                "SELECT e.id, e.user_id, e.category_id, e.amount, e.expense_date, e.note, e.payment_mode, e.created_at, c.name AS category_name " +
                 "FROM expenses e JOIN categories c ON e.category_id = c.id WHERE e.user_id = ? "
         );
         List<Object> params = new ArrayList<>();
@@ -164,6 +173,10 @@ public class ExpenseDAO implements BaseDAO<Expense> {
         if (endDate != null) {
             sql.append("AND e.expense_date <= ? ");
             params.add(Date.valueOf(endDate));
+        }
+        if (paymentMode != null && !paymentMode.isEmpty() && !"ALL".equalsIgnoreCase(paymentMode)) {
+            sql.append("AND e.payment_mode = ? ");
+            params.add(paymentMode.toUpperCase());
         }
 
         sql.append("ORDER BY e.expense_date DESC, e.id DESC LIMIT ? OFFSET ?");
@@ -190,6 +203,10 @@ public class ExpenseDAO implements BaseDAO<Expense> {
     }
 
     public int countByUserId(int userId, Integer categoryId, LocalDate startDate, LocalDate endDate) throws DatabaseException {
+        return countByUserId(userId, categoryId, startDate, endDate, null);
+    }
+
+    public int countByUserId(int userId, Integer categoryId, LocalDate startDate, LocalDate endDate, String paymentMode) throws DatabaseException {
         StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM expenses WHERE user_id = ? ");
         List<Object> params = new ArrayList<>();
         params.add(userId);
@@ -205,6 +222,10 @@ public class ExpenseDAO implements BaseDAO<Expense> {
         if (endDate != null) {
             sql.append("AND expense_date <= ? ");
             params.add(Date.valueOf(endDate));
+        }
+        if (paymentMode != null && !paymentMode.isEmpty() && !"ALL".equalsIgnoreCase(paymentMode)) {
+            sql.append("AND payment_mode = ? ");
+            params.add(paymentMode.toUpperCase());
         }
 
         try (Connection conn = DBConnection.getConnection();
@@ -263,9 +284,6 @@ public class ExpenseDAO implements BaseDAO<Expense> {
     /**
      * [Collections Rubric: Map<K,V>]
      * Aggregates total expenditure grouped by Category Name for Chart.js doughnut chart.
-     *
-     * @param userId User ID
-     * @return Map where Key is Category Name and Value is total spent
      */
     public Map<String, Double> getSpendingByCategory(int userId) throws DatabaseException {
         String sql = "SELECT c.name, COALESCE(SUM(e.amount), 0.0) AS total " +
@@ -283,6 +301,32 @@ public class ExpenseDAO implements BaseDAO<Expense> {
             }
         } catch (SQLException e) {
             throw new DatabaseException("Failed to get spending by category for user ID: " + userId, e);
+        }
+        return spendingMap;
+    }
+
+    /**
+     * [Collections Rubric: Map<K,V>]
+     * Aggregates total expenditure grouped by Payment Mode for Chart.js doughnut chart.
+     * Key: payment_mode display name, Value: total spent.
+     */
+    public Map<String, Double> getSpendingByPaymentMode(int userId) throws DatabaseException {
+        String sql = "SELECT payment_mode, COALESCE(SUM(amount), 0.0) AS total " +
+                     "FROM expenses WHERE user_id = ? GROUP BY payment_mode ORDER BY total DESC";
+        Map<String, Double> spendingMap = new LinkedHashMap<>();
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String modeStr = rs.getString("payment_mode");
+                    PaymentMode mode = PaymentMode.fromString(modeStr);
+                    spendingMap.put(mode.getDisplayName(), rs.getDouble("total"));
+                }
+            }
+        } catch (SQLException e) {
+            throw new DatabaseException("Failed to get spending by payment mode for user ID: " + userId, e);
         }
         return spendingMap;
     }
@@ -313,6 +357,18 @@ public class ExpenseDAO implements BaseDAO<Expense> {
         return trendMap;
     }
 
+    public int countAllExpenses() throws DatabaseException {
+        String sql = "SELECT COUNT(*) FROM expenses";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) return rs.getInt(1);
+        } catch (SQLException e) {
+            throw new DatabaseException("Failed to count all expenses", e);
+        }
+        return 0;
+    }
+
     private Expense mapResultSetToExpense(ResultSet rs) throws SQLException {
         Expense expense = new Expense();
         expense.setId(rs.getInt("id"));
@@ -326,6 +382,8 @@ public class ExpenseDAO implements BaseDAO<Expense> {
         }
         // [Security Rubric: AES-Decrypt Note]
         expense.setNote(EncryptionUtil.decrypt(rs.getString("note")));
+        // Map payment_mode string to enum
+        expense.setPaymentMode(PaymentMode.fromString(rs.getString("payment_mode")));
         Timestamp ts = rs.getTimestamp("created_at");
         if (ts != null) {
             expense.setCreatedAt(ts.toLocalDateTime());

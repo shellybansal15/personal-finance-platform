@@ -120,6 +120,76 @@ public class SecurityLogDAO implements BaseDAO<SecurityLog> {
         }
     }
 
+    public List<SecurityLog> getFilteredLogs(String userFilter, String actionFilter, int offset, int limit) throws DatabaseException {
+        StringBuilder sql = new StringBuilder(
+                "SELECT s.id, s.user_id, s.action, s.ip_address, s.created_at, u.email AS user_email " +
+                "FROM security_logs s LEFT JOIN users u ON s.user_id = u.id WHERE 1=1 "
+        );
+        List<Object> params = new ArrayList<>();
+
+        if (userFilter != null && !userFilter.trim().isEmpty()) {
+            sql.append("AND (u.email LIKE ? OR u.name LIKE ?) ");
+            String term = "%" + userFilter.trim() + "%";
+            params.add(term);
+            params.add(term);
+        }
+        if (actionFilter != null && !actionFilter.trim().isEmpty()) {
+            sql.append("AND s.action LIKE ? ");
+            params.add("%" + actionFilter.trim() + "%");
+        }
+        sql.append("ORDER BY s.id DESC LIMIT ? OFFSET ?");
+        params.add(limit);
+        params.add(offset);
+
+        List<SecurityLog> list = new ArrayList<>();
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapResultSetToSecurityLog(rs));
+                }
+            }
+        } catch (SQLException e) {
+            throw new DatabaseException("Failed to retrieve filtered security logs", e);
+        }
+        return list;
+    }
+
+    public int countFilteredLogs(String userFilter, String actionFilter) throws DatabaseException {
+        StringBuilder sql = new StringBuilder(
+                "SELECT COUNT(*) FROM security_logs s LEFT JOIN users u ON s.user_id = u.id WHERE 1=1 "
+        );
+        List<Object> params = new ArrayList<>();
+
+        if (userFilter != null && !userFilter.trim().isEmpty()) {
+            sql.append("AND (u.email LIKE ? OR u.name LIKE ?) ");
+            String term = "%" + userFilter.trim() + "%";
+            params.add(term);
+            params.add(term);
+        }
+        if (actionFilter != null && !actionFilter.trim().isEmpty()) {
+            sql.append("AND s.action LIKE ? ");
+            params.add("%" + actionFilter.trim() + "%");
+        }
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            throw new DatabaseException("Failed to count filtered security logs", e);
+        }
+        return 0;
+    }
+
     private SecurityLog mapResultSetToSecurityLog(ResultSet rs) throws SQLException {
         SecurityLog log = new SecurityLog();
         log.setId(rs.getInt("id"));

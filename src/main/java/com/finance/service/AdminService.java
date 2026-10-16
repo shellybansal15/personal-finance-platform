@@ -10,6 +10,7 @@ import com.finance.model.SecurityLog;
 import com.finance.model.SystemSetting;
 import com.finance.model.User;
 import com.finance.util.AuditLogger;
+import com.finance.util.PasswordUtil;
 import com.finance.util.ValidationUtil;
 
 import java.util.HashMap;
@@ -23,6 +24,7 @@ import java.util.Optional;
  * Central administrative operations: user account oversight, role controls,
  * audit trail inspection, and system feature configurations.
  * Contains critical self-preservation safeguards (admins cannot demote or block themselves).
+ * Updated: addUser(), deleteUser(), getPlatformStats() with active/blocked counts.
  * ============================================================================
  */
 public class AdminService {
@@ -48,6 +50,51 @@ public class AdminService {
 
     public int countUsers(String query, String role, String status) {
         return userDAO.countFilteredUsers(query, role, status);
+    }
+
+    /**
+     * Creates a new user with the specified role (admin-only operation).
+     */
+    public User addUser(String name, String email, String role, String password, int adminUserId, String ipAddress) {
+        String cleanName = ValidationUtil.requireNonEmpty(name, "Full Name");
+        String cleanEmail = ValidationUtil.validateEmail(email);
+        String cleanRole = (role != null && "ADMIN".equalsIgnoreCase(role)) ? "ADMIN" : "USER";
+
+        if (userDAO.findByEmail(cleanEmail).isPresent()) {
+            throw new ValidationException("An account with email " + cleanEmail + " already exists.");
+        }
+
+        String pw = (password != null && !password.trim().isEmpty()) ? password.trim() : "FinanceFlow@123";
+        ValidationUtil.validatePassword(pw);
+
+        User user = new User();
+        user.setName(cleanName);
+        user.setEmail(cleanEmail);
+        user.setPasswordHash(PasswordUtil.hashPassword(pw));
+        user.setRole(cleanRole);
+        user.setStatus("ACTIVE");
+
+        userDAO.save(user);
+        auditLogger.log(adminUserId, String.format("Admin created new %s account '%s' (ID #%d)", cleanRole, cleanEmail, user.getId()), ipAddress);
+        return user;
+    }
+
+    /**
+     * Deletes a user (admin cannot delete self).
+     */
+    public void deleteUser(int targetUserId, int adminUserId, String ipAddress) {
+        if (targetUserId == adminUserId) {
+            throw new ValidationException("Action Forbidden: Administrators cannot delete their own account.");
+        }
+
+        Optional<User> userOpt = userDAO.findById(targetUserId);
+        if (userOpt.isEmpty()) {
+            throw new ResourceNotFoundException("User not found.");
+        }
+
+        User user = userOpt.get();
+        userDAO.delete(targetUserId);
+        auditLogger.log(adminUserId, String.format("Admin deleted user '%s' (ID #%d)", user.getEmail(), targetUserId), ipAddress);
     }
 
     /**
@@ -100,13 +147,26 @@ public class AdminService {
         return securityLogDAO.getRecentLogs(limit);
     }
 
+    public List<SecurityLog> getFilteredSecurityLogs(String userFilter, String actionFilter, int offset, int limit) {
+        return securityLogDAO.getFilteredLogs(userFilter, actionFilter, offset, limit);
+    }
+
+    public int countFilteredSecurityLogs(String userFilter, String actionFilter) {
+        return securityLogDAO.countFilteredLogs(userFilter, actionFilter);
+    }
+
     public List<SystemSetting> getSystemSettings() {
         return systemSettingDAO.findAll();
     }
 
+    public String getSetting(String key, String defaultValue) {
+        return systemSettingDAO.getSettingValue(key, defaultValue);
+    }
+
     public void updateSystemSetting(String key, String value, int adminUserId, String ipAddress) {
         String cleanKey = ValidationUtil.requireNonEmpty(key, "Setting key");
-        String cleanVal = ValidationUtil.requireNonEmpty(value, "Setting value");
+        // For boolean toggles, value may be empty (unchecked = false)
+        String cleanVal = (value != null) ? value.trim() : "false";
 
         systemSettingDAO.setSettingValue(cleanKey, cleanVal, adminUserId);
         auditLogger.log(adminUserId, String.format("Admin updated system setting '%s' to '%s'", cleanKey, cleanVal), ipAddress);
@@ -115,7 +175,9 @@ public class AdminService {
     public Map<String, Object> getPlatformStats() {
         Map<String, Object> stats = new HashMap<>();
         stats.put("totalUsers", userDAO.countUsers());
-        stats.put("totalExpensesCount", expenseDAO.countByUserId(0, null, null, null)); // or overall count
+        stats.put("activeUsers", userDAO.countUsersByStatus("ACTIVE"));
+        stats.put("blockedUsers", userDAO.countUsersByStatus("BLOCKED"));
+        stats.put("totalExpensesCount", expenseDAO.countAllExpenses());
         stats.put("securityLogsCount", securityLogDAO.countLogs());
         return stats;
     }

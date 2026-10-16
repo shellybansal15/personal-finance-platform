@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
  * Represents a registered system user or platform administrator.
  * Roles: 'USER', 'ADMIN'.
  * Status: 'ACTIVE', 'BLOCKED'.
+ * Updated: Added occupation field.
  * ============================================================================
  */
 public class User {
@@ -16,8 +17,9 @@ public class User {
     private String name;
     private String email;
     private String passwordHash;
-    private String role;   // 'USER' or 'ADMIN'
-    private String status; // 'ACTIVE' or 'BLOCKED'
+    private String role;       // 'USER' or 'ADMIN'
+    private String status;     // 'ACTIVE' or 'BLOCKED'
+    private String occupation; // Nullable: occupation enum value
     private LocalDateTime createdAt;
 
     public User() {
@@ -91,6 +93,14 @@ public class User {
         this.status = status;
     }
 
+    public String getOccupation() {
+        return occupation;
+    }
+
+    public void setOccupation(String occupation) {
+        this.occupation = occupation;
+    }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
@@ -107,6 +117,7 @@ public class User {
                 ", email='" + email + '\'' +
                 ", role='" + role + '\'' +
                 ", status='" + status + '\'' +
+                ", occupation='" + occupation + '\'' +
                 '}';
     }
 }

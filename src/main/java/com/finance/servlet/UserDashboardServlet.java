@@ -4,6 +4,7 @@ import com.finance.model.Budget;
 import com.finance.model.Category;
 import com.finance.model.Expense;
 import com.finance.model.Goal;
+import com.finance.model.PaymentMode;
 import com.finance.service.BudgetService;
 import com.finance.service.ExpenseService;
 import com.finance.service.GoalService;
@@ -23,6 +24,7 @@ import java.util.Map;
  * [Servlets Rubric: UserDashboardServlet]
  * Gathers aggregate financial metrics, recent transactions, active budgets,
  * goals, and data maps for Chart.js rendering on the user overview dashboard.
+ * Updated: Adds payment mode spending map and paymentModes enum for modal dropdowns.
  * ============================================================================
  */
 @WebServlet(urlPatterns = {"/user/dashboard"})
@@ -60,9 +62,12 @@ public class UserDashboardServlet extends HttpServlet {
         // 2. Chart.js Data Maps [Rubric: Collections Map<K,V>]
         Map<String, Double> categorySpending = expenseService.getSpendingByCategory(userId);
         Map<String, Double> monthlyTrend = expenseService.getMonthlyTrend(userId, 6);
+        // New: Payment Mode spending map for doughnut chart
+        Map<String, Double> paymentModeSpending = expenseService.getSpendingByPaymentMode(userId);
 
         req.setAttribute("categorySpending", categorySpending);
         req.setAttribute("monthlyTrend", monthlyTrend);
+        req.setAttribute("paymentModeSpending", paymentModeSpending);
 
         // 3. Recent 5 Transactions
         List<Expense> recentExpenses = expenseService.getFilteredExpenses(userId, null, null, null, 1, 5);
@@ -75,9 +80,10 @@ public class UserDashboardServlet extends HttpServlet {
         req.setAttribute("budgets", budgets);
         req.setAttribute("goals", goals);
 
-        // 5. Available Categories for Add Expense Modal
+        // 5. Available Categories & Payment Modes for Add Expense Modal
         List<Category> categories = expenseService.getAllCategories();
         req.setAttribute("categories", categories);
+        req.setAttribute("paymentModes", PaymentMode.values());
 
         req.getRequestDispatcher("/WEB-INF/jsp/user/dashboard.jsp").forward(req, resp);
     }

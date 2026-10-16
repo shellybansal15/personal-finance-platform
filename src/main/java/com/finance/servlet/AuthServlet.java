@@ -19,6 +19,7 @@ import java.io.IOException;
  * Handles user login, registration, and logout flows.
  * Uses Post-Redirect-Get (PRG) with session flash messages to prevent duplicate form
  * submissions and provide clean confirmation notifications for every user action.
+ * Updated: Login validates selected role (User/Admin) against the database record.
  * ============================================================================
  */
 @WebServlet(urlPatterns = {"/login", "/register", "/logout"})
@@ -90,9 +91,12 @@ public class AuthServlet extends HttpServlet {
     private void handleLogin(HttpServletRequest req, HttpServletResponse resp, String clientIp) throws IOException {
         String email = req.getParameter("email");
         String password = req.getParameter("password");
+        // New: "Login as" role selector — "USER" or "ADMIN"
+        String loginAsRole = req.getParameter("loginAs");
 
         try {
-            User user = userService.login(email, password, clientIp);
+            // Use role-aware login method
+            User user = userService.loginWithRole(email, password, loginAsRole, clientIp);
 
             // Invalidate old session and generate new session ID (Session Fixation Prevention)
             HttpSession oldSession = req.getSession(false);
@@ -110,7 +114,7 @@ public class AuthServlet extends HttpServlet {
             // [Rubric: Every action shows confirmation message]
             newSession.setAttribute("flashSuccess", "Welcome back, " + user.getName() + "! You have logged in successfully.");
 
-            // Post-Redirect-Get routing
+            // Post-Redirect-Get routing: admin always goes to admin dashboard
             if (user.isAdmin()) {
                 resp.sendRedirect(req.getContextPath() + "/admin/dashboard");
             } else {
@@ -122,6 +126,7 @@ public class AuthServlet extends HttpServlet {
             HttpSession session = req.getSession(true);
             session.setAttribute("flashError", e.getMessage());
             session.setAttribute("loginEmail", email);
+            session.setAttribute("loginAs", loginAsRole); // Preserve selector state
             resp.sendRedirect(req.getContextPath() + "/login");
         }
     }
@@ -131,6 +136,7 @@ public class AuthServlet extends HttpServlet {
         String email = req.getParameter("email");
         String password = req.getParameter("password");
         String confirmPassword = req.getParameter("confirmPassword");
+        String occupation = req.getParameter("occupation");  // New: occupation field
 
         HttpSession session = req.getSession(true);
 
@@ -138,12 +144,13 @@ public class AuthServlet extends HttpServlet {
             session.setAttribute("flashError", "Passwords do not match. Please verify and try again.");
             session.setAttribute("regName", name);
             session.setAttribute("regEmail", email);
+            session.setAttribute("regOccupation", occupation);
             resp.sendRedirect(req.getContextPath() + "/register");
             return;
         }
 
         try {
-            userService.register(name, email, password, clientIp);
+            userService.register(name, email, password, occupation, clientIp);
 
             // [Rubric: Every action shows confirmation message]
             session.setAttribute("flashSuccess", "Registration successful! You may now sign in with your email and password.");
@@ -153,6 +160,7 @@ public class AuthServlet extends HttpServlet {
             session.setAttribute("flashError", e.getMessage());
             session.setAttribute("regName", name);
             session.setAttribute("regEmail", email);
+            session.setAttribute("regOccupation", occupation);
             resp.sendRedirect(req.getContextPath() + "/register");
         }
     }

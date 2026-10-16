@@ -7,6 +7,7 @@ import com.finance.exception.UnauthorizedException;
 import com.finance.exception.ValidationException;
 import com.finance.model.Category;
 import com.finance.model.Expense;
+import com.finance.model.PaymentMode;
 import com.finance.util.AuditLogger;
 import com.finance.util.ValidationUtil;
 
@@ -20,6 +21,7 @@ import java.util.Optional;
  * [Service Rubric: ExpenseService]
  * Business logic layer for expenses: validation, ownership verification,
  * filtering, aggregations, and security audit tracking.
+ * Updated: Handles paymentMode field, paymentMode filter, and spending-by-mode aggregation.
  * ============================================================================
  */
 public class ExpenseService {
@@ -34,9 +36,10 @@ public class ExpenseService {
         this.auditLogger = AuditLogger.getInstance();
     }
 
-    public Expense addExpense(int userId, int categoryId, String amountStr, String dateStr, String note, String ipAddress) {
+    public Expense addExpense(int userId, int categoryId, String amountStr, String dateStr, String note, String paymentModeStr, String ipAddress) {
         double amount = ValidationUtil.validatePositiveAmount(amountStr, "Expense amount");
         LocalDate date = ValidationUtil.validateDate(dateStr, "Expense date");
+        PaymentMode paymentMode = PaymentMode.fromString(paymentModeStr);
 
         if (categoryDAO.findById(categoryId).isEmpty()) {
             throw new ValidationException("Selected category does not exist.");
@@ -48,16 +51,23 @@ public class ExpenseService {
         expense.setAmount(amount);
         expense.setDate(date);
         expense.setNote(note != null ? note.trim() : "");
+        expense.setPaymentMode(paymentMode);
 
         expenseDAO.save(expense);
-        auditLogger.log(userId, String.format("Added expense of $%.2f (ID #%d)", amount, expense.getId()), ipAddress);
+        auditLogger.log(userId, String.format("Added expense of \u20b9%.2f via %s (ID #%d)", amount, paymentMode.getDisplayName(), expense.getId()), ipAddress);
 
         return expense;
     }
 
-    public void updateExpense(int expenseId, int userId, int categoryId, String amountStr, String dateStr, String note, String ipAddress) {
+    // Overload for backward compatibility (defaults to UPI)
+    public Expense addExpense(int userId, int categoryId, String amountStr, String dateStr, String note, String ipAddress) {
+        return addExpense(userId, categoryId, amountStr, dateStr, note, "UPI", ipAddress);
+    }
+
+    public void updateExpense(int expenseId, int userId, int categoryId, String amountStr, String dateStr, String note, String paymentModeStr, String ipAddress) {
         double amount = ValidationUtil.validatePositiveAmount(amountStr, "Expense amount");
         LocalDate date = ValidationUtil.validateDate(dateStr, "Expense date");
+        PaymentMode paymentMode = PaymentMode.fromString(paymentModeStr);
 
         Optional<Expense> existing = expenseDAO.findById(expenseId);
         if (existing.isEmpty()) {
@@ -75,9 +85,15 @@ public class ExpenseService {
         exp.setAmount(amount);
         exp.setDate(date);
         exp.setNote(note != null ? note.trim() : "");
+        exp.setPaymentMode(paymentMode);
 
         expenseDAO.update(exp);
-        auditLogger.log(userId, String.format("Updated expense ID #%d to $%.2f", expenseId, amount), ipAddress);
+        auditLogger.log(userId, String.format("Updated expense ID #%d to \u20b9%.2f via %s", expenseId, amount, paymentMode.getDisplayName()), ipAddress);
+    }
+
+    // Overload for backward compatibility
+    public void updateExpense(int expenseId, int userId, int categoryId, String amountStr, String dateStr, String note, String ipAddress) {
+        updateExpense(expenseId, userId, categoryId, amountStr, dateStr, note, "UPI", ipAddress);
     }
 
     public void deleteExpense(int expenseId, int userId, String ipAddress) {
@@ -94,12 +110,20 @@ public class ExpenseService {
     }
 
     public List<Expense> getFilteredExpenses(int userId, Integer categoryId, LocalDate startDate, LocalDate endDate, int page, int pageSize) {
+        return getFilteredExpenses(userId, categoryId, startDate, endDate, null, page, pageSize);
+    }
+
+    public List<Expense> getFilteredExpenses(int userId, Integer categoryId, LocalDate startDate, LocalDate endDate, String paymentMode, int page, int pageSize) {
         int offset = Math.max(0, (page - 1) * pageSize);
-        return expenseDAO.findByUserId(userId, categoryId, startDate, endDate, offset, pageSize);
+        return expenseDAO.findByUserId(userId, categoryId, startDate, endDate, paymentMode, offset, pageSize);
     }
 
     public int countFilteredExpenses(int userId, Integer categoryId, LocalDate startDate, LocalDate endDate) {
         return expenseDAO.countByUserId(userId, categoryId, startDate, endDate);
+    }
+
+    public int countFilteredExpenses(int userId, Integer categoryId, LocalDate startDate, LocalDate endDate, String paymentMode) {
+        return expenseDAO.countByUserId(userId, categoryId, startDate, endDate, paymentMode);
     }
 
     public List<Expense> getAllExpensesForExport(int userId) {
@@ -118,11 +142,19 @@ public class ExpenseService {
         return expenseDAO.getSpendingByCategory(userId);
     }
 
+    public Map<String, Double> getSpendingByPaymentMode(int userId) {
+        return expenseDAO.getSpendingByPaymentMode(userId);
+    }
+
     public Map<String, Double> getMonthlyTrend(int userId, int months) {
         return expenseDAO.getMonthlySpendingTrend(userId, months);
     }
 
     public List<Category> getAllCategories() {
         return categoryDAO.findAll();
+    }
+
+    public PaymentMode[] getAllPaymentModes() {
+        return PaymentMode.values();
     }
 }

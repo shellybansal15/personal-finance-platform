@@ -17,7 +17,8 @@ import java.util.List;
  * ============================================================================
  * [Servlets & Admin Rubric: AdminUserServlet]
  * Controller for user management: searchable directory, pagination,
- * account status toggling (ACTIVE/BLOCKED), and role reassignment (USER/ADMIN).
+ * account status toggling (ACTIVE/BLOCKED), role reassignment (USER/ADMIN),
+ * add user, and delete user.
  * Safeguards prevent administrators from locking or demoting their own account.
  * ============================================================================
  */
@@ -75,16 +76,33 @@ public class AdminUserServlet extends HttpServlet {
         String clientIp = getClientIp(req);
 
         try {
-            int targetUserId = Integer.parseInt(req.getParameter("userId"));
+            if ("addUser".equalsIgnoreCase(action)) {
+                // Create new user via admin
+                String name = req.getParameter("name");
+                String email = req.getParameter("email");
+                String role = req.getParameter("role");
+                String password = req.getParameter("password");
 
-            if ("toggleStatus".equalsIgnoreCase(action)) {
-                adminService.toggleUserStatus(targetUserId, adminUserId, clientIp);
-                session.setAttribute("flashSuccess", "Success: User account status successfully modified!");
+                adminService.addUser(name, email, role, password, adminUserId, clientIp);
+                session.setAttribute("flashSuccess", "User account created successfully for " + email + "!");
 
-            } else if ("changeRole".equalsIgnoreCase(action)) {
-                String newRole = req.getParameter("newRole");
-                adminService.changeUserRole(targetUserId, adminUserId, newRole, clientIp);
-                session.setAttribute("flashSuccess", "Success: User role successfully updated to " + newRole + "!");
+            } else if ("deleteUser".equalsIgnoreCase(action)) {
+                int targetUserId = Integer.parseInt(req.getParameter("userId"));
+                adminService.deleteUser(targetUserId, adminUserId, clientIp);
+                session.setAttribute("flashSuccess", "User account deleted successfully!");
+
+            } else {
+                int targetUserId = Integer.parseInt(req.getParameter("userId"));
+
+                if ("toggleStatus".equalsIgnoreCase(action)) {
+                    adminService.toggleUserStatus(targetUserId, adminUserId, clientIp);
+                    session.setAttribute("flashSuccess", "User account status updated successfully!");
+
+                } else if ("changeRole".equalsIgnoreCase(action)) {
+                    String newRole = req.getParameter("newRole");
+                    adminService.changeUserRole(targetUserId, adminUserId, newRole, clientIp);
+                    session.setAttribute("flashSuccess", "User role updated to " + newRole + " successfully!");
+                }
             }
         } catch (AppException e) {
             session.setAttribute("flashError", e.getMessage());
